@@ -35,7 +35,6 @@ export class WoodcuttingActionView {
         <button id="${id}" style="margin-top:1rem;">Chop ${this.action.tree.name}</button>
       </div>
     `
-    const canvas = this.rootElement.querySelector<HTMLCanvasElement>('#' + id + '-progress')!
 
     const chopWoodButton = this.rootElement.querySelector<HTMLButtonElement>('#' + id)
     if (chopWoodButton) {

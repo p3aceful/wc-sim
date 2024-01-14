@@ -94,7 +94,7 @@ console.log({ initialBank, initialSkills })
 const playerSkills = new PlayerSkills(initialSkills, playerEvents)
 const bank = new Bank(initialBank, bankEvents)
 
-const gameController = new GameController(globalTimer, gameControllerEvents)
+const gameController = new GameController(gameControllerEvents)
 
 const wcRoot = document.querySelector<HTMLDivElement>('#wc')
 if (wcRoot) {
@@ -123,7 +123,7 @@ playerEvents.subscribe('levelUp', (skill) => {
   toaster.show(`You leveled up ${skill.skill}, you are now level ${skill.level}!`)
 })
 
-playerEvents.subscribe('xpGain', (skill) => {
+playerEvents.subscribe('xpGain', () => {
   saveGame(playerSkills, bank)
 })
 

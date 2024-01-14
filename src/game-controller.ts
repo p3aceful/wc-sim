@@ -42,10 +42,7 @@ export type GameControllerEvents = {
 
 export class GameController {
   private currentAction: Action | null = null
-  constructor(
-    private globalTimer: GlobalTimer,
-    private gameControllerEvents: EventBus<GameControllerEvents>
-  ) {}
+  constructor(private gameControllerEvents: EventBus<GameControllerEvents>) {}
 
   startAction(action: Action) {
     if (this.currentAction) {

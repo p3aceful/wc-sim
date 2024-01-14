@@ -124,7 +124,7 @@ export class ChopTreeAction implements IChopTreeAction {
     this.globalTimer.unregisterCallback(this.tick)
   }
 
-  tick(deltaTime: number) {
+  tick() {
     if (this.tickCount >= 4) {
       this.tickCount = 0
       this.chop()
