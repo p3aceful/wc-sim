@@ -119,9 +119,6 @@ renderBank(bank)
 renderPlayerSkills(playerSkills)
 
 const toaster = new Toaster()
-playerEvents.subscribe('levelUp', (skill) => {
-  toaster.show(`You leveled up ${skill.skill}, you are now level ${skill.level}!`)
-})
 
 playerEvents.subscribe('xpGain', () => {
   saveGame(playerSkills, bank)
@@ -134,4 +131,8 @@ bankEvents.subscribe('bankChange', () => {
 bankEvents.subscribe('insertedItem', ({ itemId, amount }) => {
   const dbItem = itemsDb.get(itemId)!
   toaster.show(`You received ${amount} ${dbItem.name}!`)
+})
+
+playerEvents.subscribe('levelUp', (skill) => {
+  toaster.show(`You leveled up ${skill.skill}, you are now level ${skill.level}!`)
 })
