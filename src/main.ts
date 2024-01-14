@@ -90,7 +90,6 @@ playerEvents.subscribe('xpGain', () => {
 })
 
 const { skills: initialSkills, bank: initialBank } = loadGame()
-console.log({ initialBank, initialSkills })
 const playerSkills = new PlayerSkills(initialSkills, playerEvents)
 const bank = new Bank(initialBank, bankEvents)
 

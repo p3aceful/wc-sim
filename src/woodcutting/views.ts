@@ -85,14 +85,12 @@ export class WoodcuttingActionView {
     const isActive = this.gameController.getCurrentAction()?.id === this.action.id
 
     if (isActive) {
-      console.log('Stopping', this.action.tree.name)
       this.gameController.stopAction()
       if (this.animationIntervalId) {
         clearInterval(this.animationIntervalId)
       }
       this.animate(0)
     } else {
-      console.log('Starting', this.action.tree.name)
       this.gameController.startAction(this.action)
       if (this.animationIntervalId) {
         clearInterval(this.animationIntervalId)
