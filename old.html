@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wood chopping simulator</title>
+  </head>
+  <body>
+    <style>
+      body {
+        font-family: monospace;
+      }
+
+      #trees,
+      #firemaking {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+      }
+
+      .tree-container,
+      .firemaking-container {
+        border: 1px solid black;
+        padding: 20px;
+      }
+
+      .tree-container .progress-bar,
+      .firemaking-container .progress-bar {
+        width: 100%;
+        height: 20px;
+        background-color: #ddd;
+        border: 1px solid black;
+      }
+
+      .tree-container .progress,
+      .firemaking-container .progress {
+        width: 0%;
+        height: 100%;
+        background-color: #4caf50;
+      }
+
+      .tree-container .button-wrapper,
+      .firemaking-container .button-wrapper {
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .tree-container .button-wrapper p,
+      .firemaking-container .button-wrapper p {
+        margin: 0;
+      }
+
+      .skills-container {
+        border: 1px solid black;
+        padding: 20px;
+      }
+
+      #root {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    </style>
+    <h1>Wood chopping simulator</h1>
+    <div id="root"></div>
+  </body>
+  <script>
+    class GameLoop {
+      constructor(callback) {
+        this.timestep = 1000 / 60
+        this.accumulator = 0
+        this.lastTime = 0
+        this.callback = callback
+      }
+
+      update(timestamp = 0) {
+        let deltaTime = timestamp - this.lastTime
+        let updateCount = 0
+        while (this.accumulator >= this.timestep) {
+          this.accumulator -= this.timestep
+          this.callback(this.timestep)
+
+          if (++updateCount >= 240) {
+            console.log('Too many updates, skipping frame')
+
+            accumulatedTime = 0
+            break
+          }
+        }
+        this.lastTime = timestamp
+        this.accumulator += this.timestep
+        requestAnimationFrame(this.update.bind(this))
+      }
+
+      run() {
+        requestAnimationFrame(this.update.bind(this))
+      }
+    }
+    const levelBreakpoints = new Map([
+      [1, 0],
+      [2, 83],
+      [3, 174],
+      [4, 276],
+      [5, 388],
+      [6, 512],
+      [7, 650],
+      [8, 801],
+      [9, 969],
+      [10, 1_154],
+      [11, 1_358],
+      [12, 1_584],
+      [13, 1_833],
+      [14, 2_107],
+      [15, 2_411],
+      [16, 2_746],
+      [17, 3_115],
+      [18, 3_523],
+      [19, 3_973],
+      [20, 4_470],
+      [21, 5_018],
+      [22, 5_624],
+      [23, 6_291],
+      [24, 7_028],
+      [25, 7_842],
+      [26, 8_740],
+      [27, 9_730],
+      [28, 10_824],
+      [29, 12_031],
+      [30, 13_363],
+      [31, 14_833],
+      [32, 16_456],
+      [33, 18_247],
+      [34, 20_224],
+      [35, 22_406],
+      [36, 24_815],
+      [37, 27_473],
+      [38, 30_408],
+      [39, 33_648],
+      [40, 37_224],
+      [41, 41_171],
+      [42, 45_529],
+      [43, 50_339],
+      [44, 55_649],
+      [45, 61_512],
+      [46, 67_983],
+      [47, 75_127],
+      [48, 83_014],
+      [49, 91_721],
+      [50, 101_333],
+      [51, 111_945],
+      [52, 123_660],
+      [53, 136_594],
+      [54, 150_872],
+      [55, 166_636],
+      [56, 184_040],
+      [57, 203_254],
+      [58, 224_466],
+      [59, 247_886],
+      [60, 273_742],
+      [61, 302_288],
+      [62, 333_804],
+      [63, 368_599],
+      [64, 407_015],
+      [65, 449_428],
+      [66, 496_254],
+      [67, 547_953],
+      [68, 605_032],
+      [69, 668_051],
+      [70, 737_627],
+      [71, 814_445],
+      [72, 899_257],
+      [73, 992_895],
+      [74, 1_096_278],
+      [75, 1_210_421],
+      [76, 1_336_443],
+      [77, 1_475_581],
+      [78, 1_629_200],
+      [79, 1_798_808],
+      [80, 1_986_068],
+      [81, 2_192_818],
+      [82, 2_421_087],
+      [83, 2_673_114],
+      [84, 2_951_373],
+      [85, 3_258_594],
+      [86, 3_597_792],
+      [87, 3_972_294],
+      [88, 4_385_776],
+      [89, 4_842_295],
+      [90, 5_346_332],
+      [91, 5_902_831],
+      [92, 6_517_253],
+      [93, 7_195_629],
+      [94, 7_944_614],
+      [95, 8_771_558],
+      [96, 9_684_577],
+      [97, 10_692_629],
+      [98, 11_805_606],
+      [99, 13_034_431],
+    ])
+
+    const trees = [
+      {
+        id: 'normal',
+        name: 'Vanlig tre',
+        levelRequirement: 1,
+        experience: 25,
+        baseChoppingDurationMs: 5000,
+        grantsItem: [
+          {
+            id: 'logs',
+            name: 'Tømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'oak',
+        name: 'Eiketre',
+        levelRequirement: 15,
+        experience: 37.5,
+        baseChoppingDurationMs: 7500,
+        grantsItem: [
+          {
+            id: 'logs',
+            name: 'Eiketømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'willow',
+        name: 'Vidjetre',
+        levelRequirement: 30,
+        experience: 67.5,
+        baseChoppingDurationMs: 10000,
+        grantsItem: [
+          {
+            id: 'logs',
+            name: 'Vidjetømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'maple',
+        name: 'Lønnetre',
+        levelRequirement: 45,
+        experience: 100,
+        baseChoppingDurationMs: 12500,
+        grantsItem: [
+          {
+            id: 'logs',
+            name: 'Lønnetømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'yew',
+        name: 'Ivetre',
+        levelRequirement: 60,
+        experience: 175,
+        baseChoppingDurationMs: 15000,
+        grantsItem: [
+          {
+            id: 'logs',
+            name: 'Ivetømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'magic',
+        name: 'Magisk tre',
+        levelRequirement: 75,
+        experience: 250,
+        baseChoppingDurationMs: 20000,
+        grantsItem: [
+          {
+            id: 'logs',
+            name: 'Magisk tømmer',
+            quantity: 1,
+          },
+        ],
+      },
+    ]
+
+    const firemakingLogs = [
+      {
+        id: 'firemakinLogs',
+        name: 'Tømmer',
+        levelRequirement: 1,
+        experience: 40,
+        baseBurnDuration: 5000,
+        requiresItem: [
+          {
+            id: 'logs',
+            name: 'Tømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'firemakingOakLogs',
+        name: 'Eiketømmer',
+        levelRequirement: 15,
+        experience: 60,
+        baseBurnDuration: 7500,
+        requiresItem: [
+          {
+            id: 'logs',
+            name: 'Eiketømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'firemakingWillowLogs',
+        name: 'Vidjetømmer',
+        levelRequirement: 30,
+        experience: 90,
+        baseBurnDuration: 10000,
+        requiresItem: [
+          {
+            id: 'logs',
+            name: 'Vidjetømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'firemakingMapleLogs',
+        name: 'Lønnetømmer',
+        levelRequirement: 45,
+        experience: 135,
+        baseBurnDuration: 12500,
+        requiresItem: [
+          {
+            id: 'logs',
+            name: 'Lønnetømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'firemakingYewLogs',
+        name: 'Ivetømmer',
+        levelRequirement: 60,
+        experience: 202.5,
+        baseBurnDuration: 15000,
+        requiresItem: [
+          {
+            id: 'logs',
+            name: 'Ivetømmer',
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        id: 'firemakingMagicLogs',
+        name: 'Magisk tømmer',
+        levelRequirement: 75,
+        experience: 303.8,
+        baseBurnDuration: 20000,
+        requiresItem: [
+          {
+            id: 'logs',
+            name: 'Magisk tømmer',
+            quantity: 1,
+          },
+        ],
+      },
+    ]
+    let currentTreeId = undefined
+    let currentProgress = 0
+    let currentFiremakingTreeId = undefined
+    let currentFiremakingProgress = 0
+
+    class Store {
+      constructor() {
+        this.skills = {
+          woodcutting: {
+            level: 1,
+            experience: 0,
+          },
+          firemaking: {
+            level: 1,
+            experience: 0,
+          },
+        }
+
+        this.inventory = []
+
+        this.eventTarget = window
+      }
+
+      insertItem(item) {
+        const existingItem = this.inventory.find((inventoryItem) => inventoryItem.id === item.id)
+        if (existingItem) {
+          existingItem.quantity += item.quantity
+        } else {
+          this.inventory.push(JSON.parse(JSON.stringify(item)))
+        }
+
+        this.eventTarget.dispatchEvent(
+          new CustomEvent('inventoryChange', { detail: this.inventory })
+        )
+      }
+
+      withdrawItem(item, quantity = 1) {
+        const existingItem = this.inventory.find((inventoryItem) => inventoryItem.id === item.id)
+        if (!existingItem) {
+          return null
+        }
+
+        if (existingItem.quantity < quantity) {
+          return null
+        }
+
+        existingItem.quantity -= item.quantity
+
+        this.eventTarget.dispatchEvent(
+          new CustomEvent('inventoryChange', { detail: this.inventory })
+        )
+        return {
+          ...existingItem,
+          quantity,
+        }
+      }
+
+      insertItems(items) {
+        items.forEach((item) => this.insertItem(item))
+      }
+
+      hasItem(item) {
+        const existingItem = this.inventory.find((inventoryItem) => inventoryItem.id === item.id)
+        if (!existingItem) {
+          return false
+        }
+
+        return existingItem.quantity >= item.quantity
+      }
+
+      updateState(newState) {
+        this.skills = newState
+        this.eventTarget.dispatchEvent(new CustomEvent('stateChange', { detail: this.skills }))
+      }
+
+      emitLevelUpEvent(skill, level) {
+        this.eventTarget.dispatchEvent(new CustomEvent('levelUp', { detail: { skill, level } }))
+      }
+
+      gainExperience(skill, experience) {
+        if (!this.skills[skill]) {
+          throw new Error(`Unknown skill ${skill}`)
+        }
+
+        const newXp = this.skills[skill].experience + experience
+        const shouldLevelUp = newXp >= levelBreakpoints.get(this.skills[skill].level + 1)
+        const newLevel = shouldLevelUp ? this.skills[skill].level + 1 : this.skills[skill].level
+        const newState = {
+          ...this.skills,
+          [skill]: {
+            ...this.skills[skill],
+            experience: newXp,
+            level: newLevel,
+          },
+        }
+        if (shouldLevelUp) {
+          this.emitLevelUpEvent(skill, newLevel)
+        }
+        this.updateState(newState)
+      }
+
+      getSkillsState() {
+        return this.skills
+      }
+    }
+
+    const store = new Store()
+
+    const updateTreeState = (treeId) => {
+      if (currentTreeId === treeId) {
+        currentProgress = 0
+        currentTreeId = undefined
+      } else {
+        currentTreeId = treeId
+        currentProgress = 0
+      }
+      window.dispatchEvent(
+        new CustomEvent('treeStateChange', { detail: { treeId: currentTreeId } })
+      )
+    }
+
+    const updateFiremakingState = (firemakingTree) => {
+      if (currentFiremakingTreeId === firemakingTree) {
+        currentFiremakingProgress = 0
+        currentFiremakingTreeId = undefined
+      } else {
+        currentFiremakingTreeId = firemakingTree
+        currentFiremakingProgress = 0
+      }
+      window.dispatchEvent(
+        new CustomEvent('firemakingStateChange', { detail: { treeId: currentFiremakingTreeId } })
+      )
+    }
+
+    class TreeComponent {
+      constructor(tree) {
+        this.tree = tree
+        this.element = this.createElement(tree)
+        window.addEventListener('stateChange', () => this.render())
+        window.addEventListener('treeStateChange', ({ detail }) => {
+          this.handleTreeStateChange(detail.treeId)
+        })
+        this.render()
+      }
+
+      handleTreeStateChange(treeId) {
+        this.render()
+      }
+
+      createElement(tree) {
+        const treeRoot = document.createElement('div')
+        treeRoot.id = tree.id
+        treeRoot.classList.add('tree-container')
+        treeRoot.innerHTML = `
+          <h2>${tree?.name}</h2>
+          <div class="progress-bar"><div class="progress"></div></div>
+          <div class="button-wrapper">
+            <button>Locked</button>
+            <p id="locked-text">Requires level ${tree.levelRequirement}</p>
+          </div>
+        `
+        const button = treeRoot.querySelector('button')
+        button.addEventListener('click', () => updateTreeState(tree.id))
+        return treeRoot
+      }
+
+      updateProgress() {}
+
+      update(delta) {
+        if (currentTreeId === this.tree.id) {
+          const { baseChoppingDurationMs } = this.tree
+          currentProgress += delta
+          const newProgress = Math.round((currentProgress / this.tree.baseChoppingDurationMs) * 100)
+          if (newProgress !== this.lastRenderedProgress) {
+            if (currentProgress >= this.tree.baseChoppingDurationMs) {
+              currentProgress = 0
+              store.gainExperience('woodcutting', this.tree.experience)
+              store.insertItems(this.tree.grantsItem)
+            }
+
+            // Render only if progress has changed
+            this.render()
+            this.lastRenderedProgress = newProgress
+          }
+
+          this.render()
+        }
+      }
+
+      render() {
+        const state = store.getSkillsState()
+        const isLocked = this.tree.levelRequirement > state.woodcutting.level
+        const button = this.element.querySelector('button')
+        button.disabled = isLocked
+        button.innerText = isLocked ? 'Locked' : 'Chop'
+
+        if (currentTreeId === this.tree.id) {
+          button.innerText = 'Stop'
+          const progressBar = this.element.querySelector('.progress')
+          progressBar.style.width = `${this.lastRenderedProgress}%`
+        } else {
+          const progressBar = this.element.querySelector('.progress')
+          progressBar.style.width = `${0}%`
+        }
+
+        if (!isLocked) {
+          const lockedText = this.element.querySelector('#locked-text')
+          lockedText.style.display = 'none'
+        }
+      }
+    }
+
+    class FiremakingComponent {
+      constructor(firemakingTrees) {
+        this.firemakingTrees = firemakingTrees
+        this.element = this.createElement()
+        window.addEventListener('stateChange', () => this.render())
+        window.addEventListener('firemakingStateChange', () => this.render())
+        window.addEventListener('inventoryChange', () => this.render())
+        this.render()
+      }
+
+      createElement() {
+        const firemakingRoot = document.createElement('div')
+        const firemakingContainer = document.createElement('div')
+        firemakingContainer.id = 'firemaking'
+        const firemakingHeader = document.createElement('h2')
+        firemakingHeader.innerText = 'Firemaking'
+        firemakingRoot.appendChild(firemakingHeader)
+        firemakingRoot.appendChild(firemakingContainer)
+
+        this.firemakingTrees.forEach((tree) => {
+          const firemakingItem = document.createElement('div')
+          firemakingItem.classList.add('firemaking-container')
+          firemakingItem.id = tree.id
+          firemakingItem.innerHTML = `
+            <h2>${tree.name}</h2>
+            <div class="progress-bar"><div class="progress"></div></div>
+            <div class="button-wrapper">
+              <button>Locked</button>
+              <p id="locked-text">Requires level ${tree.levelRequirement}</p>
+            </div>
+          `
+          const button = firemakingItem.querySelector('button')
+          button.addEventListener('click', () => updateFiremakingState(tree.id))
+          firemakingContainer.appendChild(firemakingItem)
+        })
+
+        return firemakingRoot
+      }
+
+      update(delta) {
+        const currentFiremakingTree = this.firemakingTrees.find(
+          (tree) => tree.id === currentFiremakingTreeId
+        )
+
+        if (!currentFiremakingTree) {
+          return
+        }
+
+        const hasRequiredItem = currentFiremakingTree.requiresItem.every((item) =>
+          store.hasItem(item)
+        )
+        if (!hasRequiredItem) {
+          updateFiremakingState(undefined)
+          return
+        }
+        if (currentFiremakingTree) {
+          const { baseBurnDuration } = currentFiremakingTree
+          currentFiremakingProgress += delta
+          const newProgress = Math.round(
+            (currentFiremakingProgress / currentFiremakingTree.baseBurnDuration) * 100
+          )
+          if (newProgress !== this.lastRenderedProgress) {
+            if (currentFiremakingProgress >= currentFiremakingTree.baseBurnDuration) {
+              currentFiremakingProgress = 0
+              store.gainExperience('firemaking', currentFiremakingTree.experience)
+              currentFiremakingTree.requiresItem.forEach((item) => {
+                store.withdrawItem(item)
+              })
+            }
+
+            // Render only if progress has changed
+            this.render()
+            this.lastRenderedProgress = newProgress
+          }
+        }
+      }
+
+      render() {
+        const state = store.getSkillsState()
+        this.firemakingTrees.forEach((tree) => {
+          const firemakingTree = this.element.querySelector(`#${tree.id}`)
+          let isLocked = tree.levelRequirement > state.firemaking.level
+          const hasRequiredItem = tree.requiresItem.every((item) => store.hasItem(item))
+          const button = firemakingTree.querySelector('button')
+          button.disabled = isLocked || !hasRequiredItem
+          button.innerText = isLocked ? 'Locked' : !hasRequiredItem ? 'Missing logs' : 'Burn'
+
+          if (currentFiremakingTreeId === tree.id) {
+            button.innerText = 'Extinguish'
+            const progressBar = firemakingTree.querySelector('.progress')
+            progressBar.style.width = `${this.lastRenderedProgress}%`
+          } else {
+            const progressBar = firemakingTree.querySelector('.progress')
+            progressBar.style.width = `${0}%`
+          }
+
+          if (!isLocked) {
+            const lockedText = firemakingTree.querySelector('#locked-text')
+            lockedText.style.display = 'none'
+          }
+        })
+      }
+    }
+
+    class SkillsComponent {
+      constructor() {
+        this.element = this.createElement()
+        window.addEventListener('stateChange', () => this.render())
+        this.render()
+      }
+
+      createElement() {
+        const skills = document.createElement('div')
+        skills.id = 'skills'
+        const skillStates = Object.entries(store.skills)
+        skills.innerHTML = `<div class="skills-container">
+          ${skillStates
+            .map(
+              ([skill, state]) => `
+              <div id="${skill}">
+                <h2>${skill}</h2>
+                <p>Level: ${state.level}</p>
+                <p>Experience: ${state.experience} / ${levelBreakpoints.get(state.level + 1)}</p>
+              </div>`
+            )
+            .join('')}
+        </div>`
+        return skills
+      }
+
+      render() {
+        const skillStates = Object.entries(store.skills)
+        this.element.innerHTML = `<div class="skills-container">
+          ${skillStates
+            .map(
+              ([skill, state]) => `
+              <div id="${skill}-skill">
+                <h2>${skill}</h2>
+                <p>Level: ${state.level}</p>
+                <p>Experience: ${state.experience} / ${levelBreakpoints.get(state.level + 1)}</p>
+              </div>`
+            )
+            .join('')}
+        </div>`
+      }
+    }
+
+    class InventoryComponent {
+      constructor() {
+        this.element = this.createElement()
+        window.addEventListener('inventoryChange', () => this.render())
+        this.render()
+      }
+
+      createElement() {
+        const inventory = document.createElement('div')
+        inventory.id = 'inventory'
+        inventory.innerHTML = `
+          <h2>Inventory</h2>
+          <div class="inventory-container">
+            <p>Empty</p>
+          </div>
+        `
+        return inventory
+      }
+
+      render() {
+        const inventory = this.element
+
+        const inventoryContainer = inventory.querySelector('.inventory-container')
+        if (store.inventory.length === 0) {
+          inventoryContainer.innerHTML = '<p>Empty</p>'
+        } else {
+          inventoryContainer.innerHTML = store.inventory
+            .map((item) => `<p>${item.name} x ${item.quantity}</p>`)
+            .join('')
+        }
+      }
+    }
+
+    const treeComponents = trees.map((tree) => new TreeComponent(tree))
+    const firemakingComponents = new FiremakingComponent(firemakingLogs)
+    const skillsComponent = new SkillsComponent()
+    const inventoryComponent = new InventoryComponent()
+    const createUI = () => {
+      const root = document.getElementById('root')
+      const treesRoot = document.createElement('div')
+      treesRoot.id = 'trees'
+      treeComponents.forEach((treeElement) => treesRoot.appendChild(treeElement.element))
+
+      root.appendChild(treesRoot)
+      root.appendChild(firemakingComponents.element)
+
+      // Skills
+      root.appendChild(skillsComponent.element)
+
+      // Inventory
+      root.appendChild(inventoryComponent.element)
+
+      // Notifications
+      const notifications = document.createElement('div')
+      notifications.id = 'notifications'
+      root.appendChild(notifications)
+    }
+
+    const update = (deltaTime) => {
+      treeComponents.forEach((tree) => tree.update(deltaTime))
+      firemakingComponents.update(deltaTime)
+    }
+
+    const runner = new GameLoop(update)
+    runner.run()
+    createUI()
+    window.addEventListener('levelUp', (event) => {
+      const notifications = document.getElementById('notifications')
+      const notification = document.createElement('div')
+      notification.innerHTML = `${event.detail.skill} is now level ${event.detail.level}! Way to go champ!`
+      notification.style.transition = 'opacity 3s linear'
+      notification.style.position = 'fixed'
+      notification.style.top = '1rem'
+      notification.style.right = '1rem'
+      notification.style.padding = '1rem'
+      notification.style.backgroundColor = 'white'
+      notification.style.border = '1px solid black'
+      notification.style.borderRadius = '5px'
+      notification.style.opacity = 1
+      notification.style.maxWidth = '300px'
+
+      notifications.appendChild(notification)
+      setTimeout(() => {
+        notification.style.opacity = 0
+        setTimeout(() => {
+          notifications.removeChild(notification)
+        }, 3000)
+      }, 5000)
+    })
+  </script>
+</html>
