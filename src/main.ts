@@ -74,6 +74,7 @@ const {
   equipment: initialEquipment,
   shop: initialShop,
 } = loadGame()
+
 const playerSkills = new PlayerSkills(initialSkills, playerEvents)
 const bank = new Bank(initialBank, bankEvents)
 const playerEquipment = new PlayerEquipment(initialEquipment, bank, playerEquipmentEvents)

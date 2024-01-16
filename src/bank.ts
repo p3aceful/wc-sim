@@ -14,9 +14,10 @@ export type BankEvents = {
 export const initialBankItems: ItemQuantity[] = [
   {
     itemId: COINS_ITEM_ID,
-    amount: 5,
+    amount: 20,
   },
 ]
+
 export class Bank {
   private items: ItemQuantity[] = []
   private events: EventBus<BankEvents>

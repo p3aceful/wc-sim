@@ -118,7 +118,7 @@ export function loadGame(): {
   }
 
   if (!bankData) {
-    bankState = []
+    bankState = initialBankItems
   } else {
     const bankResult = bankSchema.safeParse(JSON.parse(bankData))
     if (!bankResult.success) {
