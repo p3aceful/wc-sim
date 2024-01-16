@@ -96,12 +96,12 @@ export class Shop {
     }
 
     const totalPrice = itemData.sellPrice * quantity
-    const playerCoins = bank.getAmount(COINS_ITEM_ID)
 
-    if (playerCoins < totalPrice) {
-      this.toaster.toast(`Not enough coins`)
-      throw new Error(`Not enough coins`)
+    if (bank.getAmount(itemId) < quantity) {
+      this.toaster.toast(`Item ${itemId} not found in bank`)
+      throw new Error(`Item ${itemId} not found in bank`)
     }
+
     bank.withdraw(itemId, quantity)
     bank.insert(COINS_ITEM_ID, totalPrice)
 
