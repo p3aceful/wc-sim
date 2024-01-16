@@ -1,3 +1,118 @@
 html {
   font-family: monospace;
 }
+
+.shop-grid {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 0.5rem;
+}
+.shop-item {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  background: #777;
+}
+.shop-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.shop-item__quantity {
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding-block: 0.25rem;
+  padding-inline: 0.5rem;
+  color: yellow;
+  background: #555;
+  font-size: 1rem;
+}
+
+.bank-grid {
+  display: grid;
+  gap: 1rem;
+  grid-auto-flow: column;
+  justify-content: start;
+}
+
+.bank-item {
+  position: relative;
+  display: inline;
+  padding: 0.5rem;
+  width: 50px;
+  height: 50px;
+  background: #777;
+}
+
+.bank-item__quantity {
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding-block: 0.25rem;
+  padding-inline: 0.5rem;
+  color: yellow;
+  background: #555;
+  font-size: 1rem;
+}
+
+.bank-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.equipment-slot {
+  width: 5rem;
+  height: 5rem;
+  border: 1px solid black;
+  font-size: 0.7rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  background: #777;
+  color: #999;
+  display: flex;
+  justify-content: center;
+}
+
+.equipment-grid {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  justify-content: start;
+  justify-items: center;
+  width: auto;
+  gap: 1rem;
+}
+
+.equipment-slot__head {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.equipment-slot__weapon {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+.equipment-slot__body {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+.equipment-slot__feet {
+  grid-column: 2 / 3;
+  grid-row: 3 / 3;
+}
+
+.woodcutting-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-content: start;
+  justify-items: center;
+  gap: 1rem;
+}

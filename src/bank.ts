@@ -1,21 +1,27 @@
 import { EventBus } from './events'
-import { items } from './database/items'
+import { COINS_ITEM_ID, items } from './database/items'
 
-export type ItemAmount = {
+export type ItemQuantity = {
   itemId: string
   amount: number
 }
 
 export type BankEvents = {
   bankChange: null
-  insertedItem: ItemAmount
+  insertedItem: ItemQuantity
 }
 
+export const initialBankItems: ItemQuantity[] = [
+  {
+    itemId: COINS_ITEM_ID,
+    amount: 5,
+  },
+]
 export class Bank {
-  private items: ItemAmount[] = []
+  private items: ItemQuantity[] = []
   private events: EventBus<BankEvents>
 
-  constructor(initialState: ItemAmount[], events: EventBus<BankEvents>) {
+  constructor(initialState: ItemQuantity[], events: EventBus<BankEvents>) {
     this.events = events
     this.items = initialState
   }
@@ -27,10 +33,10 @@ export class Bank {
       throw new Error(`Item ${itemId} not found`)
     }
 
-    const itemAmount = this.items.find((ia) => ia.itemId === itemId)
+    const itemQuantity = this.items.find((ia) => ia.itemId === itemId)
 
-    if (itemAmount) {
-      itemAmount.amount += amount
+    if (itemQuantity) {
+      itemQuantity.amount += amount
     } else {
       this.items.push({
         itemId,
@@ -50,29 +56,33 @@ export class Bank {
       throw new Error(`Item ${itemId} not found`)
     }
 
-    const itemAmount = this.items.find((itemAmount) => itemAmount.itemId === itemId)
+    const itemQuantity = this.items.find((itemQuantity) => itemQuantity.itemId === itemId)
 
-    if (!itemAmount) {
+    if (!itemQuantity) {
       throw new Error(`Item ${itemId} not found in bank`)
     }
 
-    if (itemAmount.amount === amount) {
-      this.items = this.items.filter((itemAmount) => itemAmount.itemId !== itemId)
-    } else if (itemAmount.amount > amount) {
-      itemAmount.amount -= amount
+    if (itemQuantity.amount === amount) {
+      this.items = this.items.filter((itemQuantity) => itemQuantity.itemId !== itemId)
+    } else if (itemQuantity.amount > amount) {
+      itemQuantity.amount -= amount
     } else {
-      this.items = this.items.filter((itemAmount) => itemAmount.itemId !== itemId)
+      this.items = this.items.filter((itemQuantity) => itemQuantity.itemId !== itemId)
     }
 
     this.events.notify('bankChange', null)
   }
 
   getAmount(itemId: string) {
-    const itemAmount = this.items.find((itemAmount) => itemAmount.itemId === itemId)
-    return itemAmount ? itemAmount.amount : 0
+    const itemQuantity = this.items.find((itemQuantity) => itemQuantity.itemId === itemId)
+    return itemQuantity ? itemQuantity.amount : 0
   }
 
   getItems() {
     return this.items
+  }
+
+  hasItem(itemId: string) {
+    return this.getAmount(itemId) > 0
   }
 }

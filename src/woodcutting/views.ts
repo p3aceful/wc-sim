@@ -49,6 +49,9 @@ export class WoodcuttingActionView {
     this.gameControllerEvents.subscribe('actionStart', () => {
       this.update()
     })
+    this.gameControllerEvents.subscribe('actionStop', () => {
+      this.update()
+    })
   }
 
   private update() {
