@@ -4,6 +4,7 @@ import { items as itemsDB } from './database/items'
 import { Action } from './global-timer'
 import { EventBus } from './events'
 import { Equipment, EquipmentSlot } from './equipment'
+import { Inventory } from './inventory'
 
 export interface PlayerEvents {
   actionStart: Action
@@ -13,7 +14,12 @@ export interface PlayerEvents {
 export class Player {
   actionQueue: Action[] = []
   events = new EventBus<PlayerEvents>()
-  constructor(private skills: PlayerSkills, private equipment: Equipment, private bank: Bank) {}
+  constructor(
+    private skills: PlayerSkills,
+    private equipment: Equipment,
+    private bank: Bank,
+    private inventory: Inventory
+  ) {}
 
   equip(itemId: string) {
     const item = itemsDB.get(itemId)!
@@ -23,26 +29,26 @@ export class Player {
       throw new Error(`Item ${itemId} is not equippable`)
     }
 
-    if (!this.bank.hasItem(itemId)) {
+    if (!this.inventory.hasItem(itemId)) {
       throw new Error(`Item ${itemId} not found in bank`)
     }
 
     const equippedItem = this.equipment.getEquippedItem(slot)
 
     if (equippedItem) {
-      this.bank.insert(equippedItem, 1)
+      this.inventory.insert(equippedItem, 1)
       this.equipment.unequip(slot)
     }
 
     this.equipment.equip(slot, itemId)
-    this.bank.withdraw(itemId, 1)
+    this.inventory.remove(itemId, 1)
   }
 
   unequip(slot: EquipmentSlot) {
     const equippedItem = this.equipment.getEquippedItem(slot)
 
     if (equippedItem) {
-      this.bank.insert(equippedItem, 1)
+      this.inventory.insert(equippedItem, 1)
     }
 
     this.equipment.unequip(slot)
@@ -90,5 +96,9 @@ export class Player {
 
   getEvents() {
     return this.events
+  }
+
+  getInventory() {
+    return this.inventory
   }
 }

@@ -10,6 +10,7 @@ export type Item = {
   buyable: boolean
   sellable: boolean
   equipmentSlot?: EquipmentSlot
+  description: string
 }
 
 export const COINS_ITEM_ID = 'coin'
@@ -62,6 +63,7 @@ export const items = new Map<string, Item>([
       buyPrice: 0,
       buyable: false,
       sellable: false,
+      description: 'Lovely money!',
     },
   ],
   [
@@ -74,6 +76,7 @@ export const items = new Map<string, Item>([
       buyPrice: 2,
       buyable: true,
       sellable: true,
+      description: 'A number of wooden logs.',
     },
   ],
   [
@@ -86,6 +89,7 @@ export const items = new Map<string, Item>([
       buyPrice: 12,
       buyable: true,
       sellable: true,
+      description: 'Logs cut from an oak tree.',
     },
   ],
   [
@@ -98,6 +102,7 @@ export const items = new Map<string, Item>([
       buyPrice: 24,
       buyable: true,
       sellable: true,
+      description: 'Logs cut from a willow tree.',
     },
   ],
   [
@@ -110,6 +115,7 @@ export const items = new Map<string, Item>([
       buyPrice: 48,
       buyable: true,
       sellable: true,
+      description: 'Logs cut from a maple tree.',
     },
   ],
   [
@@ -122,6 +128,7 @@ export const items = new Map<string, Item>([
       buyPrice: 96,
       buyable: true,
       sellable: true,
+      description: 'Logs cut from a yew tree.',
     },
   ],
   [
@@ -134,6 +141,7 @@ export const items = new Map<string, Item>([
       buyPrice: 192,
       buyable: true,
       sellable: true,
+      description: 'Logs cut from a magic tree.',
     },
   ],
   [
@@ -146,6 +154,7 @@ export const items = new Map<string, Item>([
       buyPrice: 270,
       buyable: true,
       sellable: true,
+      description: 'Logs cut from a redwood tree.',
     },
   ],
   [
@@ -159,6 +168,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: "A woodcutter's axe.",
     },
   ],
   [
@@ -172,6 +182,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: "A woodcutter's axe.",
     },
   ],
   [
@@ -185,6 +196,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: "A woodcutter's axe.",
     },
   ],
   [
@@ -198,6 +210,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: 'A sinister looking axe.',
     },
   ],
   [
@@ -211,6 +224,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: 'A powerful axe.',
     },
   ],
   [
@@ -224,6 +238,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: 'A powerful axe.',
     },
   ],
   [
@@ -237,6 +252,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: 'A powerful axe.',
     },
   ],
   [
@@ -250,6 +266,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'weapon',
+      description: 'A very powerful axe.',
     },
   ],
   [
@@ -263,6 +280,7 @@ export const items = new Map<string, Item>([
       buyable: true,
       sellable: true,
       equipmentSlot: 'feet',
+      description: 'Comfortable leather boots.',
     },
   ],
 ])

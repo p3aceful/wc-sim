@@ -1,7 +1,7 @@
-import { items as itemsDB } from './database/items'
-import { Player } from './player'
+import { items as itemsDB } from '../database/items'
+import { Player } from '../player'
 import { BaseUI } from './base-ui'
-import { EquipmentSlot } from './equipment'
+import { defaultEquipmentCommands } from '../database/item-commands'
 export class EquipmentUI {
   private ui: BaseUI
   constructor(private root: HTMLElement, private player: Player) {
@@ -20,22 +20,22 @@ export class EquipmentUI {
           throw new Error(`Item ${itemId} not found`)
         }
 
-        const buttons = []
+        const buttons: HTMLElement[] = []
 
-        if (item.equipmentSlot) {
-          const unequipButton = document.createElement('button')
-          unequipButton.id = 'unequip'
-          unequipButton.classList.add('equipment-item__button')
-          unequipButton.textContent = `Unequip`
-          buttons.push(unequipButton)
-
-          unequipButton.addEventListener('click', (event) => {
-            event.stopPropagation()
-            const equipmentSlot = item.equipmentSlot!
-            this.player.unequip(equipmentSlot as EquipmentSlot)
-            this.ui.closePopover()
+        defaultEquipmentCommands
+          .filter((command) => command.shouldBeVisible(item, { player }))
+          .forEach((command) => {
+            const button = document.createElement('button')
+            button.id = command.id
+            button.classList.add('equipment-item__button')
+            button.textContent = command.name
+            button.addEventListener('click', (event) => {
+              event.stopPropagation()
+              command.execute(item, { player })
+              this.ui.closePopover()
+            })
+            buttons.push(button)
           })
-        }
         const content = document.createElement('div')
         const header = document.createElement('h3')
         header.innerText = item.name

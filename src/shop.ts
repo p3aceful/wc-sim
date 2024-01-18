@@ -33,6 +33,14 @@ export const initialShopItems: ItemQuantity[] = [
     itemId: 'runeAxe',
     amount: 1,
   },
+  {
+    itemId: 'dragonAxe',
+    amount: 1,
+  },
+  {
+    itemId: 'leatherBoots',
+    amount: 1,
+  },
 ]
 
 export interface ShopItem extends ItemQuantity {}
@@ -69,10 +77,10 @@ export class Shop {
       return
     }
 
-    const bank = player.getBank()
+    const inventory = player.getInventory()
 
     const totalPrice = itemData.buyPrice * quantity
-    const playerCoins = bank.getAmount(COINS_ITEM_ID)
+    const playerCoins = inventory.getQuantity(COINS_ITEM_ID)
 
     if (playerCoins < totalPrice) {
       this.toaster.toast(`Not enough coins`)
@@ -84,8 +92,8 @@ export class Shop {
       return
     }
 
-    bank.withdraw(COINS_ITEM_ID, totalPrice)
-    bank.insert(itemId, quantity)
+    inventory.remove(COINS_ITEM_ID, totalPrice)
+    inventory.insert(itemId, quantity)
 
     if (item.amount === quantity) {
       this.items = this.items.filter((item) => item.itemId !== itemId)
@@ -119,15 +127,15 @@ export class Shop {
     }
 
     const totalPrice = itemData.sellPrice * quantity
-    const playerBank = player.getBank()
+    const inventory = player.getInventory()
 
-    if (playerBank.getAmount(itemId) < quantity) {
+    if (inventory.getQuantity(itemId) < quantity) {
       this.toaster.toast(`Not enough ${itemData.name} in bank to sell`)
       return
     }
 
-    playerBank.withdraw(itemId, quantity)
-    playerBank.insert(COINS_ITEM_ID, totalPrice)
+    inventory.remove(itemId, quantity)
+    inventory.insert(COINS_ITEM_ID, totalPrice)
 
     const existingShopItem = this.items.find((item) => item.itemId === itemId)
     if (!existingShopItem) {
@@ -143,8 +151,8 @@ export class Shop {
   }
 
   sellAllItem(itemId: string, player: Player): void {
-    const bank = player.getBank()
-    const quantity = bank.getAmount(itemId)
+    const inventory = player.getInventory()
+    const quantity = inventory.getQuantity(itemId)
     this.sellItem(itemId, quantity, player)
   }
 

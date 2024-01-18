@@ -5,12 +5,20 @@ import { Shop, initialShopItems } from './shop'
 import { Player } from './player'
 import { Equipment, emptyEquipment, EquippedItems } from './equipment'
 import { levelBreakpoints } from './database/skills'
+import { Inventory } from './inventory'
 
 const skillsSchema = z.object({
   woodcutting: z.number(),
 })
 
 const bankSchema = z.array(
+  z.object({
+    id: z.string(),
+    amount: z.number(),
+  })
+)
+
+const inventorySchema = z.array(
   z.object({
     id: z.string(),
     amount: z.number(),
@@ -59,6 +67,20 @@ const serializeBank = (bank: Bank): z.infer<typeof bankSchema> => {
   return bankResult.data
 }
 
+const serializeInventory = (inventory: Inventory): z.infer<typeof inventorySchema> => {
+  const inventoryData = inventory.getItems().map((item) => ({
+    id: item.itemId,
+    amount: item.amount,
+  }))
+
+  const inventoryResult = inventorySchema.safeParse(inventoryData)
+  if (!inventoryResult.success) {
+    throw new Error(`Failed to save inventory: ${inventoryResult.error}`)
+  }
+
+  return inventoryResult.data
+}
+
 const serializeShop = (shop: Shop): z.infer<typeof shopSchema> => {
   const shopData = shop.getItems().map((item) => ({
     id: item.itemId,
@@ -94,14 +116,20 @@ export function saveGame(player: Player, shop: Shop) {
   const serializedBank = serializeBank(player.getBank())
   const serializedShop = serializeShop(shop)
   const serializedEquipment = serializeEquipment(player.getEquipment())
+  const serializedInventory = serializeInventory(player.getInventory())
 
   saveToLocalStorage('skills', serializedSkills)
   saveToLocalStorage('bank', serializedBank)
   saveToLocalStorage('shop', serializedShop)
   saveToLocalStorage('equipment', serializedEquipment)
+  saveToLocalStorage('inventory', serializedInventory)
 }
 
 const unserializeSkills = (skills: unknown): Skills => {
+  if (!skills) {
+    return beginnerSkills
+  }
+
   const skillsResult = skillsSchema.safeParse(skills)
   if (!skillsResult.success) {
     console.log('Failed to unserialize skills, using beginner skills', skillsResult.error)
@@ -129,6 +157,9 @@ const unserializeSkills = (skills: unknown): Skills => {
 }
 
 const unserializeBank = (bank: unknown): ItemQuantity[] => {
+  if (!bank) {
+    return initialBankItems
+  }
   const bankResult = bankSchema.safeParse(bank)
   if (!bankResult.success) {
     console.log('Failed to unserialize bank, using initial bank', bankResult.error)
@@ -142,6 +173,9 @@ const unserializeBank = (bank: unknown): ItemQuantity[] => {
 }
 
 const unserializeShop = (shop: unknown): ItemQuantity[] => {
+  if (!shop) {
+    return initialShopItems
+  }
   const shopResult = shopSchema.safeParse(shop)
   if (!shopResult.success) {
     console.log('Failed to unserialize shop, using initial shop', shopResult.error)
@@ -155,6 +189,9 @@ const unserializeShop = (shop: unknown): ItemQuantity[] => {
 }
 
 const unserializeEquipment = (equipment: unknown): EquippedItems => {
+  if (!equipment) {
+    return emptyEquipment
+  }
   const equipmentResult = equipmentSchema.safeParse(equipment)
   if (!equipmentResult.success) {
     console.log('Failed to unserialize equipment, using empty equipment', equipmentResult.error)
@@ -163,26 +200,47 @@ const unserializeEquipment = (equipment: unknown): EquippedItems => {
 
   return equipmentResult.data
 }
+
+const unserializeInventory = (inventory: unknown): ItemQuantity[] => {
+  if (!inventory) {
+    return []
+  }
+  const inventoryResult = inventorySchema.safeParse(inventory)
+  if (!inventoryResult.success) {
+    console.log('Failed to unserialize inventory, using empty inventory', inventoryResult.error)
+    return []
+  }
+
+  return inventoryResult.data.map((item) => ({
+    itemId: item.id,
+    amount: item.amount,
+  }))
+}
+
 export function loadGame(): {
   skills: Skills
   bank: ItemQuantity[]
   equipment: EquippedItems
   shop: ItemQuantity[]
+  inventory: ItemQuantity[]
 } {
   const skillsData = localStorage.getItem('skills')
   const bankData = localStorage.getItem('bank')
   const equipmentData = localStorage.getItem('equipment')
   const shopData = localStorage.getItem('shop')
+  const inventoryData = localStorage.getItem('inventory')
 
   const unserializedSkills = unserializeSkills(JSON.parse(skillsData as unknown as string))
   const unserializedBank = unserializeBank(JSON.parse(bankData as unknown as string))
   const unserializedShop = unserializeShop(JSON.parse(shopData as unknown as string))
   const unserializedEquipment = unserializeEquipment(JSON.parse(equipmentData as unknown as string))
+  const unserializedInventory = unserializeInventory(JSON.parse(inventoryData as unknown as string))
 
   return {
     skills: unserializedSkills,
     bank: unserializedBank,
     equipment: unserializedEquipment,
     shop: unserializedShop,
+    inventory: unserializedInventory,
   }
 }

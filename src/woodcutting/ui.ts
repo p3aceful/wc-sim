@@ -27,13 +27,13 @@ export class WoodcuttingActionUI {
 
   mount() {
     this.rootElement.innerHTML = `
-      <div style="border:1px solid black; padding:1rem;">
+      <div style="border:1px dashed black; padding:1rem;">
         <h3>${this.tree.name}</h1>
         <div style="position:relative;display:inline-block;">
           <img src="${this.tree.asset}" style="width: 75px;height:75px;object-fit:contain;display:block;"/>
           <canvas id="${this.tree.id}-progress" width="50" height="50" style="position:absolute;bottom:0;left:100%;"></canvas>
         </div>
-        <button id="${this.tree.id}" style="margin-top:1rem;">Chop ${this.tree.name}</button>
+        <button id="${this.tree.id}" style="margin-top:1rem;display:block;">Chop ${this.tree.name}</button>
       </div>
     `
     const chopWoodButton = this.rootElement.querySelector<HTMLButtonElement>('#' + this.tree.id)

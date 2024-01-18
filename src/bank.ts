@@ -1,5 +1,7 @@
 import { EventBus, Listener } from './events'
 import { COINS_ITEM_ID, items } from './database/items'
+import { Player } from './player'
+import { ItemStore } from './item-store'
 
 export type ItemQuantity = {
   itemId: string
@@ -19,31 +21,30 @@ export const initialBankItems: ItemQuantity[] = [
 ]
 
 export class Bank {
-  private items: ItemQuantity[] = []
+  private items: ItemStore
   private events: EventBus<BankEvents>
 
   constructor(initialState: ItemQuantity[], events: EventBus<BankEvents>) {
     this.events = events
-    this.items = initialState
+    this.items = new ItemStore(initialState)
   }
 
-  insert(itemId: string, amount: number = 1) {
+  insert(itemId: string, amount: number = 1, player: Player) {
     const dbItem = items.get(itemId)
 
     if (!dbItem) {
       throw new Error(`Item ${itemId} not found`)
     }
 
-    const itemQuantity = this.items.find((ia) => ia.itemId === itemId)
+    const inventory = player.getInventory()
 
-    if (itemQuantity) {
-      itemQuantity.amount += amount
-    } else {
-      this.items.push({
-        itemId,
-        amount,
-      })
+    // Does the player have the item?
+    if (!inventory.hasQuantity(itemId, amount)) {
+      throw new Error(`Player does not have ${itemId}`)
     }
+
+    inventory.remove(itemId, amount)
+    this.items.insert(itemId, amount)
 
     this.events.notify('bankChange', null)
     this.events.notify('insertedItem', {
@@ -52,39 +53,56 @@ export class Bank {
     })
   }
 
-  withdraw(itemId: string, amount: number = 1) {
+  insertAll(itemId: string, player: Player) {
+    const quantity = player.getInventory().getQuantity(itemId)
+
+    if (quantity === 0) {
+      throw new Error(`Item ${itemId} not found in inventory`)
+    }
+
+    this.insert(itemId, quantity, player)
+  }
+
+  withdraw(itemId: string, amount: number = 1, player: Player) {
     if (!items.get(itemId)) {
       throw new Error(`Item ${itemId} not found`)
     }
 
-    const itemQuantity = this.items.find((itemQuantity) => itemQuantity.itemId === itemId)
-
-    if (!itemQuantity) {
+    if (this.items.hasQuantity(itemId, amount) === false) {
       throw new Error(`Item ${itemId} not found in bank`)
     }
 
-    if (itemQuantity.amount === amount) {
-      this.items = this.items.filter((itemQuantity) => itemQuantity.itemId !== itemId)
-    } else if (itemQuantity.amount > amount) {
-      itemQuantity.amount -= amount
-    } else {
-      this.items = this.items.filter((itemQuantity) => itemQuantity.itemId !== itemId)
-    }
+    const inventory = player.getInventory()
+
+    // Put item in inventory
+    inventory.insert(itemId, amount)
+
+    // Remove item(s) from bank
+    this.items.remove(itemId, amount)
 
     this.events.notify('bankChange', null)
   }
 
-  getAmount(itemId: string) {
-    const itemQuantity = this.items.find((itemQuantity) => itemQuantity.itemId === itemId)
-    return itemQuantity ? itemQuantity.amount : 0
+  withdrawAll(itemId: string, player: Player) {
+    const quantity = this.items.getQuantity(itemId)
+
+    if (quantity === 0) {
+      throw new Error(`Item ${itemId} not found in bank`)
+    }
+
+    this.withdraw(itemId, quantity, player)
+  }
+
+  getQuantity(itemId: string) {
+    return this.items.getQuantity(itemId)
   }
 
   getItems() {
-    return this.items
+    return this.items.getItems()
   }
 
   hasItem(itemId: string) {
-    return this.getAmount(itemId) > 0
+    return this.items.hasItem(itemId)
   }
 
   on<K extends keyof BankEvents>(event: K, callback: Listener<BankEvents[K]>) {

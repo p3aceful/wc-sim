@@ -73,10 +73,25 @@ export class Popover {
 
     Popover.popoverContainer.appendChild(this.popoverElement)
 
-    const targetRect = this.target.getBoundingClientRect()
-    console.log({ targetRect, target: this.target })
-    this.popoverElement.style.left = `${this.event.clientX + window.scrollX}px`
-    this.popoverElement.style.top = `${this.event.clientY + window.scrollY}px`
+    this.target.getBoundingClientRect()
+
+    const spaceRight = window.innerWidth - this.event.clientX
+    const spaceBottom = window.innerHeight - this.event.clientY
+
+    const popoverWidth = this.popoverElement.offsetWidth
+    const popoverHeight = this.popoverElement.offsetHeight
+
+    if (spaceRight < popoverWidth) {
+      this.popoverElement.style.left = `${this.event.clientX - popoverWidth + window.scrollX}px`
+    } else {
+      this.popoverElement.style.left = `${this.event.clientX + window.scrollX}px`
+    }
+
+    if (spaceBottom < popoverHeight) {
+      this.popoverElement.style.top = `${this.event.clientY - popoverHeight + window.scrollY}px`
+    } else {
+      this.popoverElement.style.top = `${this.event.clientY + window.scrollY}px`
+    }
   }
 
   close() {

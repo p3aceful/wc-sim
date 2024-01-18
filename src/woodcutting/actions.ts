@@ -54,7 +54,7 @@ export class ChopTreeAction implements IChopTreeAction {
     if (Math.random() < probability) {
       skills.addXp('woodcutting', this.tree.grantsXp)
       const { id, amount } = this.tree.grantsItem
-      this.player.getBank().insert(id, amount)
+      this.player.getInventory().insert(id, amount)
     }
   }
 

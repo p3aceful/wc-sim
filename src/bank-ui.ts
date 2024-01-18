@@ -1,11 +1,11 @@
-import { Shop } from './shop'
 import { getAssetForItem, items as itemsDB } from './database/items'
-import { BaseUI } from './base-ui'
+import { BaseUI } from './ui/base-ui'
 import { Player } from './player'
+import { bankItemCommands } from './database/item-commands'
 
 export class BankUI {
   private ui: BaseUI
-  constructor(private root: HTMLElement, private player: Player, private shop: Shop) {
+  constructor(private root: HTMLElement, private player: Player) {
     // This should handle everything to do with the bank UI.
     // It should render the bank, and handle events from when the user clicks on the bank.
     // It should also handle events from the bank itself, like when the bank changes.
@@ -23,63 +23,26 @@ export class BankUI {
           throw new Error(`Item ${itemId} not found`)
         }
 
-        const buttons = []
-
-        if (item.sellable) {
-          const sellButton = document.createElement('button')
-          sellButton.id = 'sell'
-          sellButton.classList.add('bank-item__button')
-          sellButton.textContent = `Sell for ${item.sellPrice}gp`
-          buttons.push(sellButton)
-
-          sellButton.addEventListener('click', (event) => {
-            event.stopPropagation()
-            const itemId = item.id
-            const amount = 1
-            this.shop.sellItem(itemId, amount, this.player)
-            this.ui.closePopover()
-          })
-
-          const sellAllButton = document.createElement('button')
-          sellAllButton.id = 'sellAll'
-          sellAllButton.classList.add('bank-item__button')
-          sellAllButton.textContent = `Sell all`
-          buttons.push(sellAllButton)
-          sellAllButton.addEventListener('click', (event) => {
-            event.stopPropagation()
-            const itemId = item.id
-            this.shop.sellAllItem(itemId, this.player)
-            this.ui.closePopover()
-          })
-        }
-
-        if (item.equipmentSlot) {
-          const equipButton = document.createElement('button')
-          equipButton.id = 'equip'
-          equipButton.classList.add('bank-item__button')
-          equipButton.textContent = `Equip`
-          buttons.push(equipButton)
-          equipButton.addEventListener('click', (event) => {
-            event.stopPropagation()
-            this.player.equip(itemId)
-            this.ui.closePopover()
-          })
-        }
-
-        const cancelButton = document.createElement('button')
-        cancelButton.id = 'cancel'
-        cancelButton.classList.add('bank-item__button')
-        cancelButton.textContent = `Cancel`
-        buttons.push(cancelButton)
-        cancelButton.addEventListener('click', (event) => {
-          event.stopPropagation()
-          this.ui.closePopover()
-        })
         const content = document.createElement('div')
 
         const header = document.createElement('h3')
         header.textContent = item.name
         content.appendChild(header)
+
+        const buttons: HTMLElement[] = bankItemCommands
+          .filter((command) => command.shouldBeVisible(item, { player }))
+          .map((command) => {
+            const button = document.createElement('button')
+            button.id = command.id
+            button.classList.add('bank-item__button')
+            button.textContent = command.name
+            button.addEventListener('click', (event) => {
+              event.stopPropagation()
+              command.execute(item, { player })
+              this.ui.closePopover()
+            })
+            return button
+          })
 
         content.append(...buttons)
         return content

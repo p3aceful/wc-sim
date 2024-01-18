@@ -1,12 +1,19 @@
-import { Shop } from './shop'
-import { getAssetForItem, items as itemsDB } from './database/items'
+import { Shop } from '../shop'
+import { getAssetForItem, items as itemsDB } from '../database/items'
 import { BaseUI } from './base-ui'
-import { Player } from './player'
+import { Player } from '../player'
+import { defaultShopItemCommands } from '../database/item-commands'
+import { Toaster } from '../toaster'
 
 export class ShopUI {
   private ui: BaseUI
 
-  constructor(private root: HTMLElement, private player: Player, private shop: Shop) {
+  constructor(
+    private root: HTMLElement,
+    private player: Player,
+    private shop: Shop,
+    private toaster: Toaster
+  ) {
     this.ui = new BaseUI(
       root,
       (target) => {
@@ -20,59 +27,34 @@ export class ShopUI {
           throw new Error(`Item ${itemId} not found`)
         }
 
-        const buttons = []
-
-        if (item.buyable) {
-          const buyButton = document.createElement('button')
-          buyButton.id = 'buy'
-          buyButton.classList.add('shop-item__button')
-          buyButton.textContent = `Buy 1`
-          buttons.push(buyButton)
-
-          buyButton.addEventListener('click', (event) => {
-            event.stopPropagation()
-            const itemId = item.id
-            const amount = 1
-            this.shop.buyItem(itemId, amount, this.player)
-            this.ui.closePopover()
-          })
-
-          const buyAllButton = document.createElement('button')
-          buyAllButton.id = 'buyAll'
-          buyAllButton.classList.add('shop-item__button')
-          buyAllButton.textContent = `Buy all`
-          buttons.push(buyAllButton)
-          buyAllButton.addEventListener('click', (event) => {
-            event.stopPropagation()
-            const itemId = item.id
-            this.shop.buyAllItem(itemId, this.player)
-            this.ui.closePopover()
-          })
-        }
-
-        const cancelButton = document.createElement('button')
-        cancelButton.id = 'cancel'
-        cancelButton.classList.add('bank-item__button')
-        cancelButton.textContent = `Cancel`
-        buttons.push(cancelButton)
-        cancelButton.addEventListener('click', (event) => {
-          event.stopPropagation()
-          this.ui.closePopover()
-        })
+        const buttons: HTMLElement[] = []
 
         const content = document.createElement('div')
-
         const header = document.createElement('span')
         header.textContent = item.name
         content.appendChild(header)
 
-        const price = document.createElement('span')
-        price.textContent = `Price ${item.buyPrice}gp`
-        content.appendChild(price)
-
-        buttons.forEach((button) => {
-          content.appendChild(button)
-        })
+        defaultShopItemCommands
+          .filter((command) =>
+            command.shouldBeVisible(item, {
+              shop: this.shop,
+              player: this.player,
+              toaster: this.toaster,
+            })
+          )
+          .forEach((command) => {
+            const button = document.createElement('button')
+            button.id = command.id
+            button.classList.add('shop-item__button')
+            button.textContent = command.name
+            button.addEventListener('click', (event) => {
+              event.stopPropagation()
+              command.execute(item, { player: this.player, shop: this.shop, toaster: this.toaster })
+              this.ui.closePopover()
+            })
+            buttons.push(button)
+          })
+        content.append(...buttons)
         return content
       }
     )
