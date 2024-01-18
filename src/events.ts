@@ -1,4 +1,4 @@
-type Listener<TEvent> = (event: TEvent) => void
+export type Listener<TEvent> = (event: TEvent) => void
 
 export interface Observable<TEvents> {
   subscribe<K extends keyof TEvents>(event: K, listener: Listener<TEvents[K]>): void

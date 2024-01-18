@@ -1,5 +1,3 @@
-import { EventBus } from './events'
-
 type TimerCallback = (deltaTime: number) => void
 
 export class GlobalTimer {
@@ -40,35 +38,8 @@ export type GameControllerEvents = {
   actionStop: Action
 }
 
-export class GameController {
-  private currentAction: Action | null = null
-  constructor(private gameControllerEvents: EventBus<GameControllerEvents>) {}
-
-  startAction(action: Action) {
-    if (this.currentAction) {
-      this.currentAction.stop()
-    }
-    this.currentAction = action
-    this.currentAction.start()
-    this.gameControllerEvents.notify('actionStart', action)
-  }
-
-  stopAction() {
-    if (this.currentAction) {
-      const action = this.currentAction
-      this.currentAction.stop()
-      this.currentAction = null
-      this.gameControllerEvents.notify('actionStop', action)
-    }
-  }
-
-  getCurrentAction() {
-    return this.currentAction
-  }
-}
-
 export interface Action {
   id: string
-  start(): void
-  stop(): void
+  update(deltaTime: number): void
+  isComplete(): boolean
 }

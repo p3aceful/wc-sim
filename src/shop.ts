@@ -1,6 +1,7 @@
-import { Bank, ItemQuantity as ItemQuantity } from './bank'
+import { ItemQuantity as ItemQuantity } from './bank'
 import { COINS_ITEM_ID, items as itemsDB } from './database/items'
 import { EventBus } from './events'
+import { Player } from './player'
 import { Toaster } from './toaster'
 
 export interface ShopEvents {
@@ -50,28 +51,37 @@ export class Shop {
     return this.items
   }
 
-  buyItem(itemId: string, quantity: number, bank: Bank): void {
+  buyItem(itemId: string, quantity: number, player: Player): void {
     const item = this.items.find((item) => item.itemId === itemId)
-    const itemData = itemsDB.get(itemId)!
 
     if (!item) {
       throw new Error(`Item ${itemId} not found in shop`)
     }
 
-    if (!itemData.buyable) {
-      throw new Error(`Item ${itemId} is not buyable`)
+    const itemData = itemsDB.get(itemId)!
+
+    if (!itemData) {
+      throw new Error(`Unable ${itemId} to read item data`)
     }
+
+    if (!itemData.buyable) {
+      this.toaster.toast(`Item ${itemData.name} cannot be bought`)
+      return
+    }
+
+    const bank = player.getBank()
 
     const totalPrice = itemData.buyPrice * quantity
     const playerCoins = bank.getAmount(COINS_ITEM_ID)
 
     if (playerCoins < totalPrice) {
       this.toaster.toast(`Not enough coins`)
-      throw new Error(`Not enough coins`)
+      return
     }
+
     if (item.amount < quantity) {
       this.toaster.toast(`Not enough items in stock`)
-      throw new Error(`Not enough items in stock`)
+      return
     }
 
     bank.withdraw(COINS_ITEM_ID, totalPrice)
@@ -86,34 +96,63 @@ export class Shop {
     this.events.notify('shopChange', null)
   }
 
-  sellItem(itemId: string, quantity: number, bank: Bank): void {
+  buyAllItem(itemId: string, player: Player): void {
     const item = this.items.find((item) => item.itemId === itemId)
-    const itemData = itemsDB.get(itemId)!
+    if (!item) {
+      throw new Error(`Item ${itemId} not found in shop`)
+    }
+
+    this.buyItem(itemId, item.amount, player)
+  }
+
+  // A method to sell all of a certain item in the bank
+  sellItem(itemId: string, quantity: number, player: Player): void {
+    const itemData = itemsDB.get(itemId)
+
+    if (!itemData) {
+      throw new Error(`Item ${itemId} not found in shop`)
+    }
 
     if (!itemData.sellable) {
-      this.toaster.toast(`Item ${itemId} is not sellable`)
-      throw new Error(`Item ${itemId} is not sellable`)
+      this.toaster.toast(`Item ${itemData.name} cant be sold`)
+      return
     }
 
     const totalPrice = itemData.sellPrice * quantity
+    const playerBank = player.getBank()
 
-    if (bank.getAmount(itemId) < quantity) {
-      this.toaster.toast(`Item ${itemId} not found in bank`)
-      throw new Error(`Item ${itemId} not found in bank`)
+    if (playerBank.getAmount(itemId) < quantity) {
+      this.toaster.toast(`Not enough ${itemData.name} in bank to sell`)
+      return
     }
 
-    bank.withdraw(itemId, quantity)
-    bank.insert(COINS_ITEM_ID, totalPrice)
+    playerBank.withdraw(itemId, quantity)
+    playerBank.insert(COINS_ITEM_ID, totalPrice)
 
-    if (!item) {
+    const existingShopItem = this.items.find((item) => item.itemId === itemId)
+    if (!existingShopItem) {
       this.items.push({
         itemId,
         amount: quantity,
       })
     } else {
-      item.amount += quantity
+      existingShopItem.amount += quantity
     }
 
     this.events.notify('shopChange', null)
+  }
+
+  sellAllItem(itemId: string, player: Player): void {
+    const bank = player.getBank()
+    const quantity = bank.getAmount(itemId)
+    this.sellItem(itemId, quantity, player)
+  }
+
+  on<T extends keyof ShopEvents>(event: T, handler: (data: ShopEvents[T]) => void) {
+    this.events.subscribe(event, handler)
+  }
+
+  off<T extends keyof ShopEvents>(event: T, handler: (data: ShopEvents[T]) => void) {
+    this.events.unsubscribe(event, handler)
   }
 }

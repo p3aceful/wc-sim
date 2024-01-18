@@ -1,112 +1,67 @@
-import { Bank } from './bank'
-import { EventBus } from './events'
+import { EventBus, Listener } from './events'
 
-export interface Equipment {
+export interface EquippedItems {
   head: string | null
-  // cape: string | null
-  // neck: string | null
-  // quiver: string | null
   weapon: string | null
   body: string | null
-  // shield: string | null
-  // legs: string | null
-  // hands: string | null
   feet: string | null
-  // ring: string | null
 }
 
-export const emptyEquipment: Equipment = {
+export type EquipmentSlot = keyof EquippedItems
+
+export type EquipmentEvents = {
+  equip: { slot: EquipmentSlot; itemId: string }
+  unequip: { slot: EquipmentSlot; itemId: string }
+  change: null
+}
+
+export const emptyEquipment: EquippedItems = {
   head: null,
-  // cape: null
-  // neck: null
-  // quiver: null
   weapon: null,
   body: null,
-  // shield: null
-  // legs: null
-  // hands: null
   feet: null,
-  // ring: null
 }
 
-export type EquipmentSlot = keyof Equipment
+export class Equipment {
+  private events = new EventBus<EquipmentEvents>()
 
-export interface EquipmentEvents {
-  equip: keyof Equipment
-  unequip: keyof Equipment
-}
+  private equipment: EquippedItems
 
-export class PlayerEquipment {
-  private equipment: Equipment = {
-    head: null,
-    weapon: null,
-    body: null,
-    feet: null,
+  constructor(initialState: EquippedItems) {
+    this.equipment = initialState
   }
-
-  constructor(
-    initialEequipment: Equipment,
-    private bank: Bank,
-    private equipmentEvents: EventBus<EquipmentEvents>
-  ) {
-    this.equipment = initialEequipment
-  }
-
   getEquipment() {
     return this.equipment
   }
 
-  setEquipmentSlot(slot: keyof Equipment, itemId: string) {
-    const bankHasItem = this.bank.hasItem(itemId)
+  getEquippedItem(slot: EquipmentSlot): string | null {
+    return this.equipment[slot] ?? null
+  }
 
-    if (!bankHasItem) {
-      throw new Error(`Item ${itemId} not found in bank`)
-    }
-
-    const existingItem = this.equipment[slot]
-
-    if (existingItem) {
-      this.bank.insert(existingItem, 1)
-      this.equipmentEvents.notify('unequip', slot)
-    }
-
+  equip(slot: EquipmentSlot, itemId: string): void {
     this.equipment[slot] = itemId
-    this.equipmentEvents.notify('equip', slot)
-
-    this.bank.withdraw(itemId, 1)
+    this.events.notify('equip', { slot, itemId })
+    this.events.notify('change', null)
   }
 
-  getEquipmentSlot(slot: keyof Equipment) {
-    return this.equipment[slot]
-  }
-
-  unequipSlot(slot: EquipmentSlot) {
-    const existingItem = this.equipment[slot]
-    if (existingItem) {
-      this.bank.insert(existingItem, 1)
+  unequip(slot: EquipmentSlot): void {
+    const unequippedItem = this.equipment[slot]
+    if (unequippedItem) {
+      this.equipment[slot] = null
+      this.events.notify('unequip', { slot, itemId: unequippedItem })
+      this.events.notify('change', null)
     }
-
-    this.equipment[slot] = null
-    this.equipmentEvents.notify('unequip', slot)
   }
 
-  getEquippedItems() {
-    return Object.values(this.equipment)
-  }
-
-  isEquipped(itemId: string) {
-    return this.getEquippedItems().includes(itemId)
-  }
-
-  getEquimentSlotIds(): EquipmentSlot[] {
+  getEquipmentSlotIds(): EquipmentSlot[] {
     return Object.keys(this.equipment) as EquipmentSlot[]
   }
 
-  getEquippedItemIdsExcept(slot: keyof Equipment) {
-    return Object.keys(this.equipment).filter((s) => s !== slot)
+  on<K extends keyof EquipmentEvents>(event: K, callback: Listener<EquipmentEvents[K]>) {
+    this.events.subscribe(event, callback)
   }
 
-  getEquippedItemIdsExceptSlots(slots: (keyof Equipment)[]) {
-    return Object.keys(this.equipment).filter((s) => !slots.includes(s as keyof Equipment))
+  off<K extends keyof EquipmentEvents>(event: K, callback: Listener<EquipmentEvents[K]>) {
+    this.events.unsubscribe(event, callback)
   }
 }

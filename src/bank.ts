@@ -1,4 +1,4 @@
-import { EventBus } from './events'
+import { EventBus, Listener } from './events'
 import { COINS_ITEM_ID, items } from './database/items'
 
 export type ItemQuantity = {
@@ -85,5 +85,13 @@ export class Bank {
 
   hasItem(itemId: string) {
     return this.getAmount(itemId) > 0
+  }
+
+  on<K extends keyof BankEvents>(event: K, callback: Listener<BankEvents[K]>) {
+    this.events.subscribe(event, callback)
+  }
+
+  off<K extends keyof BankEvents>(event: K, callback: Listener<BankEvents[K]>) {
+    this.events.unsubscribe(event, callback)
   }
 }

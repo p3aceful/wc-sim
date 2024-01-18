@@ -1,32 +1,57 @@
-import { EquipmentEvents, EquipmentSlot, PlayerEquipment } from './equipment'
-import { EventBus } from './events'
 import { items as itemsDB } from './database/items'
+import { Player } from './player'
+import { BaseUI } from './base-ui'
+import { EquipmentSlot } from './equipment'
 export class EquipmentUI {
-  constructor(
-    private root: HTMLElement,
-    private equipment: PlayerEquipment,
-    private equipmentEvents: EventBus<EquipmentEvents>
-  ) {
+  private ui: BaseUI
+  constructor(private root: HTMLElement, private player: Player) {
     this.mount()
-    this.equipmentEvents.subscribe('equip', () => {
+
+    this.ui = new BaseUI(
+      root,
+      (target) => {
+        return target.dataset.slot === 'true' && target.dataset.itemId !== undefined
+      },
+      (target) => {
+        const itemId = target.dataset.itemId!
+        const item = itemsDB.get(itemId)
+
+        if (!item) {
+          throw new Error(`Item ${itemId} not found`)
+        }
+
+        const buttons = []
+
+        if (item.equipmentSlot) {
+          const unequipButton = document.createElement('button')
+          unequipButton.id = 'unequip'
+          unequipButton.classList.add('equipment-item__button')
+          unequipButton.textContent = `Unequip`
+          buttons.push(unequipButton)
+
+          unequipButton.addEventListener('click', (event) => {
+            event.stopPropagation()
+            const equipmentSlot = item.equipmentSlot!
+            this.player.unequip(equipmentSlot as EquipmentSlot)
+            this.ui.closePopover()
+          })
+        }
+        const content = document.createElement('div')
+        const header = document.createElement('h3')
+        header.innerText = item.name
+        content.appendChild(header)
+        content.append(...buttons)
+        return content
+      }
+    )
+
+    const playerEquipment = this.player.getEquipment()
+
+    playerEquipment.on('equip', () => {
       this.update()
     })
-
-    this.root.addEventListener('click', (event) => {
-      if (!(event.target instanceof HTMLElement)) {
-        return
-      }
-      if (event.target.dataset.slot && event.target.dataset.itemId) {
-        this.openPopover(event.target)
-        event.stopPropagation()
-      }
-    })
-    // Close popover on click outside
-    document.addEventListener('click', (event) => {
-      const popover = this.root.querySelector('#popover')
-      if (popover && !popover.contains(event.target as Node)) {
-        popover.remove()
-      }
+    playerEquipment.on('unequip', () => {
+      this.update()
     })
   }
 
@@ -34,7 +59,6 @@ export class EquipmentUI {
     const header = document.createElement('h2')
     header.innerText = 'Equipment'
     this.root.append(header)
-    this.root.style.position = 'relative'
     const equipmentGrid = document.createElement('div')
     equipmentGrid.classList.add('equipment-grid')
     this.root.append(equipmentGrid)
@@ -42,14 +66,14 @@ export class EquipmentUI {
   }
 
   update() {
-    const equipment = this.equipment.getEquipment()
-    const slotElements = this.equipment.getEquimentSlotIds().map((slot) => {
+    const equipment = this.player.getEquipment()
+    const slotElements = equipment.getEquipmentSlotIds().map((slot) => {
       const element = document.createElement('div')
       element.classList.add('equipment-slot')
       element.classList.add('equipment-slot__' + slot)
       element.dataset.slot = 'true'
       element.dataset.equipmentSlot = slot
-      const itemId = equipment[slot]
+      const itemId = equipment.getEquippedItem(slot)
       const item = itemsDB.get(itemId!)
       if (item) {
         element.dataset.itemId = item.id
@@ -65,44 +89,5 @@ export class EquipmentUI {
     const equipmentGrid = this.root.querySelector('.equipment-grid')!
     equipmentGrid.innerHTML = ''
     equipmentGrid.append(...slotElements)
-  }
-
-  openPopover(target: HTMLElement) {
-    const existingPopover = this.root.querySelector('#popover')
-    if (existingPopover) {
-      existingPopover.remove()
-    }
-
-    const popover = document.createElement('div')
-    popover.id = 'popover'
-    popover.style.position = 'absolute'
-    popover.style.left = `${target.offsetLeft + target.offsetWidth + 5}px`
-    popover.style.top = `${target.offsetTop}px`
-    popover.style.maxWidth = `${100}px`
-    popover.style.backgroundColor = '#555'
-    popover.style.color = 'yellow'
-    popover.style.border = '1px solid black'
-    popover.style.display = 'flex'
-    popover.style.flexDirection = 'column'
-    popover.style.justifyContent = 'center'
-    popover.style.gap = '1rem'
-    popover.style.padding = '1rem'
-    popover.style.zIndex = '100'
-    const itemName = target.dataset.itemName!
-    popover.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:1rem;">
-      ${itemName}
-      </div>
-      <button id="unequip">Unequip</button>
-    `
-    this.root.append(popover)
-
-    const unequipButton = popover.querySelector('#unequip')!
-    unequipButton.addEventListener('click', () => {
-      const equipmentSlot = target.dataset.equipmentSlot!
-      this.equipment.unequipSlot(equipmentSlot as EquipmentSlot)
-      this.update()
-      popover.remove()
-    })
   }
 }

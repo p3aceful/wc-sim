@@ -1,20 +1,21 @@
 import './style.css'
 import { Bank, BankEvents } from './bank'
 import { EventBus } from './events'
-import { GameController, GameControllerEvents, GlobalTimer } from './game-controller'
-import { levelBreakpoints } from './models'
+import { GlobalTimer } from './global-timer'
 import { loadGame, saveGame } from './serializer'
 import { PlayerEvents, PlayerSkills } from './skills'
 import { Toaster } from './toaster'
-import { chopTreeActions } from './woodcutting/actions'
-import { WoodcuttingActionView } from './woodcutting/views'
-import { items as itemsDb } from './database/items'
-import { skills as skillsDb } from './database/skills'
-import { EquipmentEvents, PlayerEquipment } from './equipment'
+import { WoodcuttingActionUI } from './woodcutting/ui'
+import { getAssetForItem, items as itemsDb } from './database/items'
+import { levelBreakpoints, skills as skillsDb } from './database/skills'
 import { Shop, ShopEvents } from './shop'
 import { BankUI } from './bank-ui'
 import { ShopUI } from './shop-ui'
 import { EquipmentUI } from './equipment-ui'
+import { Player } from './player'
+import { debounce } from './utilities'
+import { trees } from './database/trees'
+import { Equipment } from './equipment'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="wc"></div>
@@ -60,27 +61,29 @@ globalTimer.start()
 
 const playerEvents = new EventBus<PlayerEvents>()
 const bankEvents = new EventBus<BankEvents>()
-const gameControllerEvents = new EventBus<GameControllerEvents>()
-const playerEquipmentEvents = new EventBus<EquipmentEvents>()
 
 playerEvents.subscribe('xpGain', () => {
   renderPlayerSkills(playerSkills)
 })
+
 const toaster = new Toaster()
 
 const {
-  skills: initialSkills,
-  bank: initialBank,
-  equipment: initialEquipment,
-  shop: initialShop,
+  skills: loadedSkills,
+  bank: loadedBank,
+  equipment: loadedEquipment,
+  shop: loadedShop,
 } = loadGame()
 
-const playerSkills = new PlayerSkills(initialSkills, playerEvents)
-const bank = new Bank(initialBank, bankEvents)
-const playerEquipment = new PlayerEquipment(initialEquipment, bank, playerEquipmentEvents)
+const playerSkills = new PlayerSkills(loadedSkills, playerEvents)
+const bank = new Bank(loadedBank, bankEvents)
+const playerEquipment = new Equipment(loadedEquipment)
 const shopEvents = new EventBus<ShopEvents>()
-const shop = new Shop(initialShop, shopEvents, toaster)
-const gameController = new GameController(gameControllerEvents)
+const shop = new Shop(loadedShop, shopEvents, toaster)
+
+const player = new Player(playerSkills, playerEquipment, bank)
+
+globalTimer.registerCallback(player.update.bind(player))
 
 const wcRoot = document.querySelector<HTMLDivElement>('#wc')
 if (wcRoot) {
@@ -88,49 +91,47 @@ if (wcRoot) {
   wcRoot.style.gridTemplateColumns = 'repeat(4, minmax(auto, 200px))'
   wcRoot.style.justifyContent = 'start'
   wcRoot.style.gap = '1rem'
-  chopTreeActions(globalTimer, playerSkills, bank, playerEquipment, gameController, (message) =>
-    toaster.toast(message)
-  ).forEach((action) => {
+  trees.forEach((tree) => {
     const root = document.createElement('div')
     wcRoot.appendChild(root)
-    new WoodcuttingActionView(
-      root,
-      action,
-      gameController,
-      playerSkills,
-      playerEvents,
-      gameControllerEvents
-    )
+    new WoodcuttingActionUI(root, tree, player, toaster)
   })
 }
 renderPlayerSkills(playerSkills)
 
+const save = () => {
+  saveGame(player, shop)
+}
+
+const debouncedSaveGame = debounce(() => save(), 1000)
+
 playerEvents.subscribe('xpGain', () => {
-  saveGame(playerSkills, bank, shop, playerEquipment)
+  debouncedSaveGame()
 })
 
 bankEvents.subscribe('bankChange', () => {
-  saveGame(playerSkills, bank, shop, playerEquipment)
-})
-
-playerEquipmentEvents.subscribe('equip', () => {
-  saveGame(playerSkills, bank, shop, playerEquipment)
-})
-
-playerEquipmentEvents.subscribe('unequip', () => {
-  saveGame(playerSkills, bank, shop, playerEquipment)
+  debouncedSaveGame()
 })
 
 shopEvents.subscribe('shopChange', () => {
-  saveGame(playerSkills, bank, shop, playerEquipment)
+  debouncedSaveGame()
+})
+
+playerEquipment.on('change', () => debouncedSaveGame())
+
+window.addEventListener('beforeunload', () => {
+  debouncedSaveGame()
 })
 
 bankEvents.subscribe('insertedItem', ({ itemId, amount }) => {
   const dbItem = itemsDb.get(itemId)!
   const html = `
     <div style="display:flex;align-items:center;gap:1rem;">
-      <img src="${dbItem.asset}" style="width:25px;height:25px;object-fit:contain;">
-      <span style="color:yellow;">${amount} ${dbItem.name}</span>
+      <img src="${getAssetForItem(
+        dbItem,
+        amount
+      )}" style="width:25px;height:25px;object-fit:contain;">
+      <span style="color:yellow;">+ ${amount} ${dbItem.name}</span>
     </div>
   `
   toaster.toast(`${html}`)
@@ -140,6 +141,6 @@ playerEvents.subscribe('levelUp', (skill) => {
   toaster.toast(`You leveled up ${skill.skill}, you are now level ${skill.level}!`)
 })
 
-new BankUI(document.querySelector('#bank')!, bank, shop, playerEquipment, bankEvents)
-new ShopUI(document.querySelector('#shop')!, bank, shop, shopEvents)
-new EquipmentUI(document.querySelector('#equipment')!, playerEquipment, playerEquipmentEvents)
+new BankUI(document.querySelector('#bank')!, player, shop)
+new ShopUI(document.querySelector('#shop')!, player, shop)
+new EquipmentUI(document.querySelector('#equipment')!, player)

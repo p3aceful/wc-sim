@@ -4,6 +4,7 @@ export type Item = {
   id: string
   name: string
   asset: string
+  additionalAssets?: { asset: string; minQuantity: number }[]
   sellPrice: number
   buyPrice: number
   buyable: boolean
@@ -16,9 +17,47 @@ export const items = new Map<string, Item>([
   [
     COINS_ITEM_ID,
     {
-      id: 'coin',
+      id: COINS_ITEM_ID,
       name: 'Coins',
-      asset: 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc',
+      asset: 'https://oldschool.runescape.wiki/images/Coins_1.png?a3fa8',
+      additionalAssets: [
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_2.png?24e5a&20200425081439',
+          minQuantity: 2,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_3.png?08d80',
+          minQuantity: 3,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_4.png?61b84',
+          minQuantity: 4,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_5.png?4afbb',
+          minQuantity: 5,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_25.png?cbfd9',
+          minQuantity: 25,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_100.png?511f4',
+          minQuantity: 100,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_250.png?c2755',
+          minQuantity: 250,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_1000.png?978c8',
+          minQuantity: 1000,
+        },
+        {
+          asset: 'https://oldschool.runescape.wiki/images/Coins_detail.png?404bc',
+          minQuantity: 10000,
+        },
+      ],
       sellPrice: 0,
       buyPrice: 0,
       buyable: false,
@@ -93,6 +132,18 @@ export const items = new Map<string, Item>([
       asset: 'https://oldschool.runescape.wiki/images/Magic_logs_detail_animated.gif?78f04',
       sellPrice: 128,
       buyPrice: 192,
+      buyable: true,
+      sellable: true,
+    },
+  ],
+  [
+    'redwoodLog',
+    {
+      id: 'redwoodLog',
+      name: 'Redwood log',
+      asset: 'https://oldschool.runescape.wiki/images/Redwood_logs_detail.png?39387',
+      sellPrice: 450,
+      buyPrice: 270,
       buyable: true,
       sellable: true,
     },
@@ -188,4 +239,43 @@ export const items = new Map<string, Item>([
       equipmentSlot: 'weapon',
     },
   ],
+  [
+    'dragonAxe',
+    {
+      id: 'dragonAxe',
+      name: 'Dragon axe',
+      asset: 'https://oldschool.runescape.wiki/images/Dragon_axe_detail.png?d4b7f',
+      sellPrice: 1500000,
+      buyPrice: 2000000,
+      buyable: true,
+      sellable: true,
+      equipmentSlot: 'weapon',
+    },
+  ],
+  [
+    'leatherBoots',
+    {
+      id: 'leatherBoots',
+      name: 'Leather Boots',
+      asset: 'https://oldschool.runescape.wiki/images/Leather_boots_detail.png?8ab0a',
+      sellPrice: 3,
+      buyPrice: 6,
+      buyable: true,
+      sellable: true,
+      equipmentSlot: 'feet',
+    },
+  ],
 ])
+
+export function getAssetForItem(item: Item, quantity: number = 1) {
+  if (item.additionalAssets?.length) {
+    const sortedAssets = [...item.additionalAssets, { asset: item.asset, minQuantity: 0 }].sort(
+      (a, b) => b.minQuantity - a.minQuantity
+    )
+    const asset = sortedAssets.find((asset) => quantity >= asset.minQuantity)
+
+    return asset ? asset.asset : item.asset
+  } else {
+    return item.asset
+  }
+}

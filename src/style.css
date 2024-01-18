@@ -116,3 +116,28 @@ html {
   justify-items: center;
   gap: 1rem;
 }
+
+.popover {
+  position: absolute;
+  border: 1px solid black;
+  background: #777;
+  padding: 1rem;
+  min-width: 6rem;
+  max-width: 30rem;
+  color: yellow;
+  font-size: 0.8rem;
+  z-index: 999;
+}
+
+.popover__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.popover-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

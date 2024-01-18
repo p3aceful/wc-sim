@@ -1,5 +1,5 @@
+import { levelBreakpoints } from './database/skills'
 import { EventBus } from './events'
-import { levelBreakpoints } from './models'
 
 export type Skill = {
   level: number
@@ -67,5 +67,13 @@ export class PlayerSkills {
     }
 
     this.events.notify('xpGain', { skill, xp })
+  }
+
+  on<T extends keyof PlayerEvents>(event: T, callback: (data: PlayerEvents[T]) => void) {
+    this.events.subscribe(event, callback)
+  }
+
+  off<T extends keyof PlayerEvents>(event: T, callback: (data: PlayerEvents[T]) => void) {
+    this.events.unsubscribe(event, callback)
   }
 }
