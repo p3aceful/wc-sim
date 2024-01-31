@@ -7,41 +7,6 @@ export interface ShopEvents {
   shopChange: null
 }
 
-export const initialShopItems: ItemQuantity[] = [
-  {
-    itemId: 'bronzeAxe',
-    amount: 1,
-  },
-  {
-    itemId: 'ironAxe',
-    amount: 1,
-  },
-  {
-    itemId: 'steelAxe',
-    amount: 1,
-  },
-  {
-    itemId: 'mithrilAxe',
-    amount: 1,
-  },
-  {
-    itemId: 'adamantAxe',
-    amount: 1,
-  },
-  {
-    itemId: 'runeAxe',
-    amount: 1,
-  },
-  {
-    itemId: 'dragonAxe',
-    amount: 1,
-  },
-  {
-    itemId: 'leatherBoots',
-    amount: 1,
-  },
-]
-
 export class ShopModel {
   private store: ItemStore
 

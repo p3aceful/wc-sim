@@ -12,7 +12,7 @@ import { debounce } from './utilities'
 import { trees } from './database/trees'
 import { Equipment } from './equipment'
 import { TabViewUI } from './ui/tab-view-ui'
-import { ShopEvents, ShopModel, initialShopItems } from './shop/shop-model'
+import { ShopEvents, ShopModel } from './shop/shop-model'
 import { InventoryController } from './inventory/inventory-controller'
 import { InventoryEvents, InventoryModel } from './inventory/inventory-model'
 import { UIManager } from './ui-manager'
@@ -153,7 +153,8 @@ export class Game {
     const debouncedSaveGame = debounce(() => save(), 1000)
 
     this.shops = shopsDB.map((shop) => {
-      let loadedShopItems: ItemQuantity[] = loadedShops[shop.id] ?? initialShopItems
+      let initialItems = shop.items
+      let loadedShopItems: ItemQuantity[] = loadedShops[shop.id] ?? initialItems
       const events = new EventBus<ShopEvents>()
       events.subscribe('shopChange', () => {
         debouncedSaveGame()
@@ -190,7 +191,7 @@ export class Game {
     playerEquipment.on('change', () => debouncedSaveGame())
 
     window.addEventListener('beforeunload', () => {
-      save()
+      // save()
     })
   }
 
