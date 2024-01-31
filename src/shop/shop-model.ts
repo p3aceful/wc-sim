@@ -2,6 +2,7 @@ import { COINS_ITEM_ID, getItemById } from '../database/items'
 import { EventBus } from '../events'
 import { ItemQuantity, ItemStore } from '../item-store'
 import { Player } from '../player'
+import { Toaster } from '../toaster'
 
 export interface ShopEvents {
   shopChange: null
@@ -94,5 +95,47 @@ export class ShopModel {
     }
 
     this.sellItem(itemId, quantity, player)
+  }
+
+  buyItem(itemId: string, quantity: number, player: Player) {
+    if (!this.hasItem(itemId)) {
+      throw new Error(`Item ${itemId} not found in shop`)
+    }
+
+    const itemData = getItemById(itemId)
+    const toaster = Toaster.getInstance()
+    if (!itemData.buyable) {
+      toaster.toast(`${itemData.name} cannot be bought`)
+      return
+    }
+
+    const inventory = player.getInventory()
+
+    const totalPrice = itemData.buyPrice * quantity
+    const playerCoins = inventory.getQuantity(COINS_ITEM_ID)
+
+    if (playerCoins < totalPrice) {
+      toaster.toast(`Not enough coins`)
+      return
+    }
+
+    if (!this.hasQuantity(itemId, quantity)) {
+      toaster.toast(`Not enough items in stock`)
+      return
+    }
+
+    inventory.remove(COINS_ITEM_ID, totalPrice)
+    inventory.insert(itemId, quantity)
+    this.removeItem(itemId, quantity)
+  }
+
+  buyAllItem(itemId: string, player: Player) {
+    if (!this.hasItem(itemId)) {
+      throw new Error(`Item ${itemId} not found in shop`)
+    }
+
+    const quantity = this.getQuantity(itemId)
+
+    return this.buyItem(itemId, quantity, player)
   }
 }

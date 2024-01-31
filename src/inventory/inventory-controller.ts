@@ -1,6 +1,7 @@
 import { Command } from '../command'
-import { COINS_ITEM_ID, getItemById } from '../database/items'
+import { COINS_ITEM_ID, formatNumber, getItemById } from '../database/items'
 import { EventBus } from '../events'
+import { LootTable } from '../loot-table'
 import { Player } from '../player'
 import { ShopController } from '../shop/shop-controller'
 import { Toaster } from '../toaster'
@@ -25,7 +26,7 @@ class ExamineCommand implements InventoryCommand {
     const toaster = Toaster.getInstance()
 
     if (quantity && quantity > 10000) {
-      toaster.toast(`${quantity} x ${item.name}`)
+      toaster.toast(`${formatNumber(quantity)} x ${item.name}`)
     } else {
       toaster.toast(`${item.description}`)
     }
@@ -53,6 +54,46 @@ class RubCommand implements InventoryCommand {
   }
 }
 
+class LootBirdNestCommand implements InventoryCommand {
+  id = 'lootBirdNest'
+  name = 'Loot'
+
+  execute({ player }: InventoryCommandContext) {
+    const inventory = player.getInventory()
+    const table = new LootTable([
+      {
+        itemId: 'blueWizardRobe',
+        amount: 1,
+        weight: 20,
+      },
+      {
+        itemId: 'dragonAxe',
+        amount: 1,
+        weight: 1,
+      },
+      {
+        itemId: COINS_ITEM_ID,
+        amount: 1000,
+        weight: 100,
+      },
+      {
+        itemId: 'blueWizardHat',
+        amount: 1,
+        weight: 20,
+      },
+      {
+        itemId: 'tinderbox',
+        amount: 1,
+        weight: 5,
+      },
+    ])
+    const item = table.pickItem()
+    inventory.insert(item.itemId, item.amount)
+    inventory.remove('birdNest', 1)
+    inventory.insert('birdNestEmpty', 1)
+  }
+}
+
 class ShopExamineCommand implements InventoryCommand {
   id = 'shopExamine'
   name = 'Examine'
@@ -63,7 +104,7 @@ class ShopExamineCommand implements InventoryCommand {
     const toaster = Toaster.getInstance()
 
     if (item.id === COINS_ITEM_ID) {
-      toaster.toast(`${quantity} coins`)
+      toaster.toast(`${formatNumber(quantity ?? 0)} x Coins`)
       return
     }
 
@@ -71,7 +112,7 @@ class ShopExamineCommand implements InventoryCommand {
       toaster.toast(`${item.name} cannot be sold`)
       return
     }
-    toaster.toast(`${item.name} sells for ${item.sellPrice} coins`)
+    toaster.toast(`${item.name} sells for ${formatNumber(item.sellPrice)} coins`)
   }
 }
 
@@ -111,7 +152,10 @@ class ShopSellAllCommand implements InventoryCommand {
   }
 }
 
-const inventoryItemCommands = new Map<string, InventoryCommand[]>([['log', [new RubCommand()]]])
+const inventoryItemCommands = new Map<string, InventoryCommand[]>([
+  ['log', [new RubCommand()]],
+  ['birdNest', [new LootBirdNestCommand()]],
+])
 
 export type InventoryEvents = {
   itemClicked: { itemId: string; quantity?: number; command: InventoryCommand }

@@ -1,4 +1,4 @@
-import { getItemById } from '../database/items'
+import { formatNumber, getItemById } from '../database/items'
 import { Toaster } from '../toaster'
 import { ShopCommand, ShopCommandContext } from './shop-command'
 
@@ -13,6 +13,6 @@ export class ExamineShopItemCommand implements ShopCommand {
       toaster.toast(`${itemData.name} cannot be bought!`)
       return
     }
-    toaster.toast(`${itemData.name} costs ${itemData.buyPrice} coins`)
+    toaster.toast(`${itemData.name} costs ${formatNumber(itemData.buyPrice)} coins`)
   }
 }

@@ -55,6 +55,11 @@ export class ChopTreeAction implements IChopTreeAction {
       skills.addXp('woodcutting', this.tree.grantsXp)
       const { id, amount } = this.tree.grantsItem
       this.player.getInventory().insert(id, amount)
+
+      // Give the player a small chance to receive a birds nest.
+      if (Math.random() < 1 / 256) {
+        this.player.getInventory().insert('birdNest', 1)
+      }
     }
   }
 

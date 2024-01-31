@@ -57,7 +57,7 @@ export class Game {
             dbItem,
             amount
           )}" style="width:25px;height:25px;object-fit:contain;">
-          <span style="color:yellow;">+ ${amount} ${dbItem.name}</span>
+          <span style="color:yellow;">${amount} ${dbItem.name}</span>
         </div>
       `
       toaster.toast(`${html}`)
@@ -188,10 +188,14 @@ export class Game {
       debouncedSaveGame()
     })
 
+    inventoryEvents.subscribe('inventoryChange', () => {
+      debouncedSaveGame()
+    })
+
     playerEquipment.on('change', () => debouncedSaveGame())
 
     window.addEventListener('beforeunload', () => {
-      // save()
+      save()
     })
   }
 

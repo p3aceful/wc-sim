@@ -283,6 +283,73 @@ export const items = new Map<string, Item>([
       description: 'Comfortable leather boots.',
     },
   ],
+  [
+    'birdNest',
+    {
+      id: 'birdNest',
+      name: 'Bird nest',
+      asset: 'https://oldschool.runescape.wiki/images/Bird_nest_%28seeds%29_detail.png?5fa7e',
+      sellPrice: 271,
+      buyPrice: 453,
+      buyable: true,
+      sellable: true,
+      description: "It's a bird's nest with some stuff in it.",
+    },
+  ],
+  [
+    'birdNestEmpty',
+    {
+      id: 'birdNest',
+      name: 'Empty bird nest',
+      asset: 'https://oldschool.runescape.wiki/images/Bird_nest_%28empty%29_detail.png?0d425',
+      sellPrice: 271,
+      buyPrice: 453,
+      buyable: true,
+      sellable: true,
+      description: "It's an empty bird's nest.",
+    },
+  ],
+  [
+    'blueWizardHat',
+    {
+      id: 'blueWizardHat',
+      name: 'Blue wizard hat',
+      asset: 'https://oldschool.runescape.wiki/images/Blue_wizard_hat_detail.png?55f7d',
+      sellPrice: 1,
+      buyPrice: 2,
+      buyable: true,
+      sellable: true,
+      equipmentSlot: 'head',
+      description: 'A silly pointed hat.',
+    },
+  ],
+  [
+    'blueWizardRobe',
+    {
+      id: 'blueWizardRobe',
+      name: 'Blue wizard robe',
+      asset: 'https://oldschool.runescape.wiki/images/Blue_wizard_robe_detail.png?55f7d',
+      sellPrice: 9,
+      buyPrice: 15,
+      buyable: true,
+      sellable: true,
+      equipmentSlot: 'body',
+      description: 'I can do magic better in this.',
+    },
+  ],
+  [
+    'tinderbox',
+    {
+      id: 'tinderbox',
+      name: 'Tinderbox',
+      asset: 'https://oldschool.runescape.wiki/images/Tinderbox_detail.png?e14bd',
+      sellPrice: 1,
+      buyPrice: 2,
+      buyable: true,
+      sellable: true,
+      description: 'Useful for lighting a fire.',
+    },
+  ],
 ])
 
 export function getAssetForItem(item: Item, quantity: number = 1) {
@@ -309,11 +376,15 @@ export function getItemById(id: string): Item {
 export function toReadableQuantity(quantity: number) {
   if (quantity < 100000) {
     return quantity.toString()
-  } else if (quantity < 1000000) {
+  } else if (quantity < 10_000_000) {
     return `${Math.floor(quantity / 1000)}K`
-  } else if (quantity < 1000000000) {
+  } else if (quantity < 10_000_000_000) {
     return `${Math.floor(quantity / 1000000)}M`
   } else {
     return `${Math.floor(quantity / 1000000000)}B`
   }
+}
+
+export function formatNumber(num: number) {
+  return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
 }
