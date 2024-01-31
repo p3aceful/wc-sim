@@ -4,7 +4,7 @@ import { items as itemsDB } from './database/items'
 import { Action } from './global-timer'
 import { EventBus } from './events'
 import { Equipment, EquipmentSlot } from './equipment'
-import { Inventory } from './inventory'
+import { InventoryModel } from './inventory/inventory-model'
 
 export interface PlayerEvents {
   actionStart: Action
@@ -18,7 +18,7 @@ export class Player {
     private skills: PlayerSkills,
     private equipment: Equipment,
     private bank: Bank,
-    private inventory: Inventory
+    private inventory: InventoryModel
   ) {}
 
   equip(itemId: string) {

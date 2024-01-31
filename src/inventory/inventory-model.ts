@@ -1,13 +1,12 @@
-import { ItemQuantity } from './bank'
-import { EventBus } from './events'
-import { ItemStore } from './item-store'
+import { EventBus } from '../events'
+import { ItemQuantity, ItemStore } from '../item-store'
 
 export type InventoryEvents = {
   inventoryChange: null
   insertedItem: ItemQuantity
 }
 
-export class Inventory {
+export class InventoryModel {
   private items: ItemStore
   constructor(initialItems: ItemQuantity[], private events: EventBus<InventoryEvents>) {
     this.items = new ItemStore(initialItems)

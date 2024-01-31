@@ -3,9 +3,11 @@ import { skills } from './database/skills'
 import { Skills } from './skills'
 
 export class Toaster {
+  private static instance: Toaster
   private rootContainerElement: HTMLDivElement
   private toastCount = 0
-  constructor() {
+
+  private constructor() {
     this.rootContainerElement = document.createElement('div')
     this.rootContainerElement.style.position = 'fixed'
     this.rootContainerElement.style.bottom = '0'
@@ -19,6 +21,12 @@ export class Toaster {
     document.body.appendChild(this.rootContainerElement)
   }
 
+  static getInstance() {
+    if (!Toaster.instance) {
+      Toaster.instance = new Toaster()
+    }
+    return Toaster.instance
+  }
   toast(message: string) {
     const toast = document.createElement('div')
     toast.style.position = 'relative'
@@ -112,7 +120,6 @@ export class Toaster {
 
     toast.appendChild(okButton)
     okButton.addEventListener('click', () => {
-      console.log('click')
       toast.remove()
     })
 

@@ -11,6 +11,7 @@ export const levelUpMessages = new Map<keyof Skills, Map<number, string>>([
       [60, 'You can now chop yew trees'],
       [75, 'You can now chop magic trees'],
       [90, 'You can now chop redwood trees'],
+      [99, 'Congratulations, you have achieved the maximum level in this skill!'],
     ]),
   ],
 ])

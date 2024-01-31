@@ -1,93 +1,12 @@
 import { Player } from '../player'
-import { Shop } from '../shop'
-import { Toaster } from '../toaster'
 import { Item } from './items'
 
 export type ItemCommand<T extends object> = {
   id: string
   name: string
   execute: (item: Item, context: T) => void
-  shouldBeVisible: (item: Item, context: T) => boolean
+  shouldBeVisible: (item: Item, context?: T) => boolean
 }
-
-export const defaultShopItemCommands: ItemCommand<{
-  shop: Shop
-  player: Player
-  toaster: Toaster
-}>[] = [
-  {
-    id: 'buy',
-    name: 'Buy',
-    execute: (item, { player, shop }) => {
-      shop.buyItem(item.id, 1, player)
-    },
-    shouldBeVisible(item) {
-      return item.buyable
-    },
-  },
-  {
-    id: 'buyAll',
-    name: 'Buy all',
-    execute: (item, { player, shop }) => {
-      shop.buyAllItem(item.id, player)
-    },
-    shouldBeVisible(item) {
-      return item.buyable
-    },
-  },
-  {
-    id: 'examine',
-    name: 'Examine',
-    execute: (item, { toaster }) => {
-      toaster.toast(`${item.name} is worth ${item.sellPrice}gp`)
-    },
-    shouldBeVisible() {
-      return true
-    },
-  },
-]
-
-export const shopOpenInventoryItemCommands: ItemCommand<{
-  player: Player
-  shop: Shop
-  toaster: Toaster
-}>[] = [
-  // SHOP RELATED COMMANDS
-  {
-    id: 'sell',
-    name: 'Sell',
-    execute: (item, { player, shop }) => {
-      shop.sellItem(item.id, 1, player)
-    },
-    shouldBeVisible(item) {
-      return item.sellable
-    },
-  },
-  {
-    id: 'sellAll',
-    name: 'Sell all',
-    execute: (item, { player, shop }) => {
-      shop.sellAllItem(item.id, player)
-    },
-    shouldBeVisible(item) {
-      return item.sellable
-    },
-  },
-  {
-    id: 'examine',
-    name: 'Examine',
-    execute: (item, { toaster }) => {
-      if (item.sellable) {
-        toaster.toast(`${item.name} sells for ${item.sellPrice}gp`)
-      } else {
-        toaster.toast(`${item.description}`)
-      }
-    },
-    shouldBeVisible() {
-      return true
-    },
-  },
-]
 
 export const defaultEquipmentCommands: ItemCommand<{ player: Player }>[] = [
   {

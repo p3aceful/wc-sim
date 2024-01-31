@@ -14,7 +14,7 @@ export class ChopTreeAction implements IChopTreeAction {
   completed: boolean = false
 
   private tickCount = 0
-  constructor(tree: WoodcuttingTree, private player: Player, private toaster: Toaster) {
+  constructor(tree: WoodcuttingTree, private player: Player) {
     this.id = tree.id
     this.tree = tree
     this.update = this.update.bind(this)
@@ -24,17 +24,17 @@ export class ChopTreeAction implements IChopTreeAction {
     const equipment = this.player.getEquipment()
     const skills = this.player.getSkills().getSkills()
     const equippedItem = equipment.getEquippedItem('weapon')
-
+    const toaster = Toaster.getInstance()
     const hasRequiredLevel = skills.woodcutting.level >= this.tree.requiredLevel
 
     if (!hasRequiredLevel) {
       this.completed = true
-      this.toaster.toast(`You need level ${this.tree.requiredLevel} woodcutting to chop this tree`)
+      toaster.toast(`You need level ${this.tree.requiredLevel} woodcutting to chop this tree`)
       return
     }
 
     if (equippedItem === null || !itemIsAxe(equippedItem)) {
-      this.toaster.toast('You need an axe equipped to chop this tree')
+      toaster.toast('You need an axe equipped to chop this tree')
       this.completed = true
       return
     }

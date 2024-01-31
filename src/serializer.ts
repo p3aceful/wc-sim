@@ -1,11 +1,10 @@
 import { z } from 'zod'
-import { Skills, beginnerSkills } from './skills'
+import { PlayerSkills, Skills, beginnerSkills } from './skills'
 import { Bank, ItemQuantity, initialBankItems } from './bank'
-import { Shop, initialShopItems } from './shop'
-import { Player } from './player'
 import { Equipment, emptyEquipment, EquippedItems } from './equipment'
 import { levelBreakpoints } from './database/skills'
-import { Inventory } from './inventory'
+import { ShopModel } from './shop/shop-model'
+import { InventoryModel } from './inventory/inventory-model'
 
 const skillsSchema = z.object({
   woodcutting: z.number(),
@@ -32,12 +31,34 @@ const shopSchema = z.array(
   })
 )
 
+const shopSchemaNew = z
+  .record(z.string(), z.array(z.object({ id: z.string(), amount: z.number() })))
+  .nullable()
+
 const equipmentSchema = z.object({
   head: z.string().nullable(),
   weapon: z.string().nullable(),
   body: z.string().nullable(),
   feet: z.string().nullable(),
 })
+
+export const serializeShops = (shops: ShopModel[]) => {
+  let shopsData: { [key: string]: { id: string; amount: number }[] } = {}
+
+  shops.forEach((shop) => {
+    const items = shop.getItems().map((item) => ({
+      id: item.itemId,
+      amount: item.amount,
+    }))
+    shopsData[shop.getId()] = items
+  })
+  const shopsResult = shopSchemaNew.safeParse(shopsData)
+  if (!shopsResult.success) {
+    throw new Error(`Failed to save shops: ${shopsResult.error}`)
+  }
+
+  return shopsResult.data
+}
 
 const serializeSkills = (skills: Skills): z.infer<typeof skillsSchema> => {
   let skillsData: { [key: string]: number } = {}
@@ -67,7 +88,7 @@ const serializeBank = (bank: Bank): z.infer<typeof bankSchema> => {
   return bankResult.data
 }
 
-const serializeInventory = (inventory: Inventory): z.infer<typeof inventorySchema> => {
+const serializeInventory = (inventory: InventoryModel): z.infer<typeof inventorySchema> => {
   const inventoryData = inventory.getItems().map((item) => ({
     id: item.itemId,
     amount: item.amount,
@@ -79,20 +100,6 @@ const serializeInventory = (inventory: Inventory): z.infer<typeof inventorySchem
   }
 
   return inventoryResult.data
-}
-
-const serializeShop = (shop: Shop): z.infer<typeof shopSchema> => {
-  const shopData = shop.getItems().map((item) => ({
-    id: item.itemId,
-    amount: item.amount,
-  }))
-
-  const shopResult = shopSchema.safeParse(shopData)
-  if (!shopResult.success) {
-    throw new Error(`Failed to save shop: ${shopResult.error}`)
-  }
-
-  return shopResult.data
 }
 
 const serializeEquipment = (equipment: Equipment): z.infer<typeof equipmentSchema> => {
@@ -111,18 +118,27 @@ export function saveToLocalStorage(key: string, data: unknown) {
   localStorage.setItem(key, serializedData)
 }
 
-export function saveGame(player: Player, shop: Shop) {
-  const serializedSkills = serializeSkills(player.getSkills().getSkills())
-  const serializedBank = serializeBank(player.getBank())
-  const serializedShop = serializeShop(shop)
-  const serializedEquipment = serializeEquipment(player.getEquipment())
-  const serializedInventory = serializeInventory(player.getInventory())
+export function saveGame(
+  skills: PlayerSkills,
+  bank: Bank,
+  inventory: InventoryModel,
+  equipment: Equipment,
+  shops: ShopModel[]
+) {
+  const serialiedSkills = serializeSkills(skills.getSkills())
+  const serializedBank = serializeBank(bank)
+  const serializedInventory = serializeInventory(inventory)
+  const serializedShops = serializeShops(shops)
+  const serializedEquipment = serializeEquipment(equipment)
 
-  saveToLocalStorage('skills', serializedSkills)
+  saveToLocalStorage('skills', serialiedSkills)
   saveToLocalStorage('bank', serializedBank)
-  saveToLocalStorage('shop', serializedShop)
-  saveToLocalStorage('equipment', serializedEquipment)
   saveToLocalStorage('inventory', serializedInventory)
+  saveToLocalStorage('shops', serializedShops)
+  saveToLocalStorage('equipment', serializedEquipment)
+
+  // Remove the old shop
+  localStorage.removeItem('shop') // This should be loaded and put in the general store by now.
 }
 
 const unserializeSkills = (skills: unknown): Skills => {
@@ -172,20 +188,46 @@ const unserializeBank = (bank: unknown): ItemQuantity[] => {
   }))
 }
 
-const unserializeShop = (shop: unknown): ItemQuantity[] => {
+const unserializeShop = (shop: unknown): ItemQuantity[] | null => {
   if (!shop) {
-    return initialShopItems
+    return null
   }
   const shopResult = shopSchema.safeParse(shop)
   if (!shopResult.success) {
-    console.log('Failed to unserialize shop, using initial shop', shopResult.error)
-    return initialShopItems
+    console.log('Failed to unserialize shop using initial shop', shopResult.error)
+    return null
   }
 
   return shopResult.data.map((item) => ({
     itemId: item.id,
     amount: item.amount,
   }))
+}
+
+const unserializeShops = (shops: unknown): Record<string, ItemQuantity[]> => {
+  if (!shops) {
+    return {}
+  }
+  const shopResult = shopSchemaNew.safeParse(shops)
+  if (!shopResult.success) {
+    console.log('Failed to unserialize shop, using initial shops', shopResult.error)
+    return {}
+  }
+
+  if (!shopResult.data) {
+    console.log('Could not find any shops')
+    return {}
+  }
+  return Object.entries(shopResult.data).reduce(
+    (acc: Record<string, ItemQuantity[]>, [key, items]) => {
+      acc[key] = items.map((item) => ({
+        itemId: item.id,
+        amount: item.amount,
+      }))
+      return acc
+    },
+    {}
+  )
 }
 
 const unserializeEquipment = (equipment: unknown): EquippedItems => {
@@ -221,26 +263,40 @@ export function loadGame(): {
   skills: Skills
   bank: ItemQuantity[]
   equipment: EquippedItems
-  shop: ItemQuantity[]
+  shops: Record<string, ItemQuantity[]>
   inventory: ItemQuantity[]
 } {
   const skillsData = localStorage.getItem('skills')
   const bankData = localStorage.getItem('bank')
   const equipmentData = localStorage.getItem('equipment')
-  const shopData = localStorage.getItem('shop')
   const inventoryData = localStorage.getItem('inventory')
+  const shopsData = localStorage.getItem('shops')
+
+  const shopData = localStorage.getItem('shop')
 
   const unserializedSkills = unserializeSkills(JSON.parse(skillsData as unknown as string))
   const unserializedBank = unserializeBank(JSON.parse(bankData as unknown as string))
-  const unserializedShop = unserializeShop(JSON.parse(shopData as unknown as string))
   const unserializedEquipment = unserializeEquipment(JSON.parse(equipmentData as unknown as string))
   const unserializedInventory = unserializeInventory(JSON.parse(inventoryData as unknown as string))
+  const unserializedShops = unserializeShops(JSON.parse(shopsData as unknown as string))
+
+  const unserializedShop = unserializeShop(JSON.parse(shopData as unknown as string))
+
+  // Shop is no longer used. Put the items in the general store instead. And remove the shop.
+
+  if (unserializedShop && unserializedShop.length > 0) {
+    console.log('There is a shop and we will put the items in the general store', {
+      unserializedShop,
+    })
+    // If there is a shop, put the items in the general store. The old shop is no longer used.
+    unserializedShops['generalStore'] = unserializedShop
+  }
 
   return {
     skills: unserializedSkills,
     bank: unserializedBank,
     equipment: unserializedEquipment,
-    shop: unserializedShop,
+    shops: unserializedShops,
     inventory: unserializedInventory,
   }
 }

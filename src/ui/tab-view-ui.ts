@@ -9,7 +9,6 @@ export class TabViewUI {
   }
 
   private createTabs() {
-    console.log('Creating tabs')
     const tabContainer = document.createElement('div')
     tabContainer.classList.add('tab-container')
 

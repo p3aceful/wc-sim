@@ -297,3 +297,23 @@ export function getAssetForItem(item: Item, quantity: number = 1) {
     return item.asset
   }
 }
+
+export function getItemById(id: string): Item {
+  const item = items.get(id)
+  if (!item) {
+    throw new Error(`Item ${id} not found`)
+  }
+  return item
+}
+
+export function toReadableQuantity(quantity: number) {
+  if (quantity < 100000) {
+    return quantity.toString()
+  } else if (quantity < 1000000) {
+    return `${Math.floor(quantity / 1000)}K`
+  } else if (quantity < 1000000000) {
+    return `${Math.floor(quantity / 1000000)}M`
+  } else {
+    return `${Math.floor(quantity / 1000000000)}B`
+  }
+}

@@ -1,7 +1,6 @@
 import { SpriteAnimation } from '../animation'
 import { WoodcuttingTree } from '../database/trees'
 import { Player } from '../player'
-import { Toaster } from '../toaster'
 import { ChopTreeAction } from './actions'
 
 export class WoodcuttingActionUI {
@@ -11,8 +10,7 @@ export class WoodcuttingActionUI {
   constructor(
     private rootElement: HTMLDivElement,
     private tree: WoodcuttingTree,
-    private player: Player,
-    private toaster: Toaster
+    private player: Player
   ) {
     this.mount()
     this.player.getSkills().on('levelUp', (data) => {
@@ -103,7 +101,7 @@ export class WoodcuttingActionUI {
       this.stopAnimation()
       this.update()
     } else {
-      const action = new ChopTreeAction(this.tree, this.player, this.toaster)
+      const action = new ChopTreeAction(this.tree, this.player)
       this.player.startAction(action)
       this.actionId = action.id
       this.startAnimation()

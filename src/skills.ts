@@ -22,6 +22,9 @@ export type PlayerEvents = {
   }
 }
 
+export const MAX_LEVEL = 99
+export const MAX_XP = 200_000_000
+
 export const beginnerSkills: Skills = {
   woodcutting: {
     level: 1,
@@ -48,15 +51,16 @@ export class PlayerSkills {
       throw new Error(`Unknown skill ${skill}`)
     }
 
-    const newXp = skillState.xp + xp
+    const newXp = Math.min(skillState.xp + xp, MAX_XP)
     const levelBreakpoint = levelBreakpoints.get(skillState.level + 1)
 
     if (!levelBreakpoint) {
       throw new Error(`Unknown level ${skillState.level + 1}`)
     }
 
-    const shouldLevelUp = newXp >= levelBreakpoint
+    const shouldLevelUp = newXp >= levelBreakpoint && skillState.level < 99
     const newLevel = shouldLevelUp ? skillState.level + 1 : skillState.level
+
     this.skills[skill] = {
       level: newLevel,
       xp: newXp,
@@ -75,5 +79,23 @@ export class PlayerSkills {
 
   off<T extends keyof PlayerEvents>(event: T, callback: (data: PlayerEvents[T]) => void) {
     this.events.unsubscribe(event, callback)
+  }
+
+  getLevel(skill: keyof Skills) {
+    return Math.min(this.skills[skill].level, MAX_LEVEL)
+  }
+
+  getXp(skill: keyof Skills) {
+    return Math.min(this.skills[skill].xp, MAX_XP)
+  }
+
+  getNextLevelXp(skill: keyof Skills) {
+    const level = this.skills[skill].level
+    const nextLevel = level + 1
+    const levelBreakpoint = levelBreakpoints.get(nextLevel)
+    if (!levelBreakpoint) {
+      return MAX_XP
+    }
+    return Math.min(levelBreakpoint, MAX_XP)
   }
 }

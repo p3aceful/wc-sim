@@ -6,10 +6,6 @@ import { bankItemCommands } from './database/item-commands'
 export class BankUI {
   private ui: BaseUI
   constructor(private root: HTMLElement, private player: Player) {
-    // This should handle everything to do with the bank UI.
-    // It should render the bank, and handle events from when the user clicks on the bank.
-    // It should also handle events from the bank itself, like when the bank changes.
-
     this.ui = new BaseUI(
       root,
       (target) => {
