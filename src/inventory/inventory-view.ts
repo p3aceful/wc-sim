@@ -1,11 +1,14 @@
 import { getAssetForItem, getItemById, toReadableQuantity } from '../database/items'
 import { ContextMenu } from '../ui/context-menu'
 import { ItemQuantity } from '../item-store'
-import { InventoryCommand, InventoryEvents } from './inventory-controller'
+import { InventoryCommand } from './inventory-controller'
 import { InventoryModel } from './inventory-model'
-import { EventBus } from '../events'
+import { Evented } from '../events'
 
-export class InventoryView {
+export type InventoryViewEvents = {
+  itemClicked: { itemId: string; quantity?: number; command: InventoryCommand }
+}
+export class InventoryView extends Evented<InventoryViewEvents> {
   private root: HTMLElement
   private staticContent: HTMLElement
   private dynamicContent: HTMLElement
@@ -13,17 +16,14 @@ export class InventoryView {
 
   constructor(
     private parent: HTMLElement,
-    private events: EventBus<InventoryEvents>,
     private inventory: InventoryModel,
     private getCommandsForItem: (itemId: string) => InventoryCommand[]
   ) {
+    super()
     this.root = document.createElement('div')
     this.staticContent = document.createElement('div')
     this.dynamicContent = document.createElement('div')
-    this.contextMenu = new ContextMenu(this.parent)
-    const title = document.createElement('h3')
-    title.textContent = 'Inventory'
-    this.staticContent.appendChild(title)
+    this.contextMenu = new ContextMenu(this.root)
     this.parent.appendChild(this.root)
     this.root.appendChild(this.staticContent)
     this.root.appendChild(this.dynamicContent)
@@ -43,7 +43,7 @@ export class InventoryView {
           const onOptionSelected = (optionId: string) => {
             const command = commands.find((command) => command.id === optionId)
             if (command) {
-              this.events.notify('itemClicked', { itemId, quantity, command })
+              this.notify('itemClicked', { itemId, quantity, command })
             }
           }
 

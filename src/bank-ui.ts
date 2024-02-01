@@ -51,9 +51,6 @@ export class BankUI {
   }
 
   mount() {
-    const header = document.createElement('h2')
-    header.innerText = 'Bank'
-    this.root.appendChild(header)
     const bankContainer = document.createElement('div')
     bankContainer.classList.add('bank-grid')
     this.root.appendChild(bankContainer)

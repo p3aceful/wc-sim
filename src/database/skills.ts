@@ -15,6 +15,14 @@ export const skills = new Map<string, Skill>([
   ],
 ])
 
+export const getSkillById = (id: string) => {
+  const skill = skills.get(id)
+  if (!skill) {
+    throw new Error(`Unknown skill ${id}`)
+  }
+  return skill
+}
+
 export const levelBreakpoints = new Map([
   [1, 0],
   [2, 83],

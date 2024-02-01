@@ -75,8 +75,8 @@ html {
 }
 
 .equipment-slot {
-  width: 3.125rem;
-  height: 3.125rem;
+  width: 4.125rem;
+  height: 4.125rem;
   border: 1px solid black;
   font-size: 0.7rem;
   padding: 0.5rem;
@@ -168,7 +168,7 @@ html {
 
 .tab-content {
   display: none;
-  margin-block: 2rem;
+  margin-top: 2rem;
   border: 1px dashed #777;
   padding: 1rem;
 }
@@ -236,7 +236,6 @@ html {
 }
 
 .shop-root {
-  margin-block: 2rem;
   border: 1px dashed;
   padding: 1rem;
 }
@@ -252,4 +251,10 @@ html {
 
 .shop-view {
   display: block;
+}
+
+.woodcutting-tree-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
 }

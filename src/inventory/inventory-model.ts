@@ -1,4 +1,4 @@
-import { EventBus } from '../events'
+import { Evented } from '../events'
 import { ItemQuantity, ItemStore } from '../item-store'
 
 export type InventoryEvents = {
@@ -6,21 +6,22 @@ export type InventoryEvents = {
   insertedItem: ItemQuantity
 }
 
-export class InventoryModel {
+export class InventoryModel extends Evented<InventoryEvents> {
   private items: ItemStore
-  constructor(initialItems: ItemQuantity[], private events: EventBus<InventoryEvents>) {
+  constructor(initialItems: ItemQuantity[]) {
+    super()
     this.items = new ItemStore(initialItems)
   }
 
   insert(itemId: string, quantity: number) {
     this.items.insert(itemId, quantity)
-    this.events.notify('insertedItem', { itemId, amount: quantity })
-    this.events.notify('inventoryChange', null)
+    this.notify('insertedItem', { itemId, amount: quantity })
+    this.notify('inventoryChange', null)
   }
 
   remove(itemId: string, quantity: number) {
     this.items.remove(itemId, quantity)
-    this.events.notify('inventoryChange', null)
+    this.notify('inventoryChange', null)
   }
 
   hasItem(itemId: string) {
@@ -37,13 +38,5 @@ export class InventoryModel {
 
   getItems() {
     return this.items.getItems()
-  }
-
-  on<T extends keyof InventoryEvents>(event: T, handler: (data: InventoryEvents[T]) => void) {
-    this.events.subscribe(event, handler)
-  }
-
-  off<T extends keyof InventoryEvents>(event: T, handler: (data: InventoryEvents[T]) => void) {
-    this.events.unsubscribe(event, handler)
   }
 }

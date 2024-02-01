@@ -1,4 +1,3 @@
-import { EventBus } from '../events'
 import { Player } from '../player'
 import { BuyAllCommand } from './buy-all-command'
 import { BuyCommand } from './buy-command'
@@ -7,21 +6,10 @@ import { ShopCommand } from './shop-command'
 import { ShopModel } from './shop-model'
 import { ShopView } from './shop-view'
 
-export type ShopEvents = {
-  itemClicked: {
-    itemId: string
-    command: ShopCommand
-    quantity?: number
-  }
-}
-
 export class ShopController {
-  private events: EventBus<ShopEvents>
   private view: ShopView
   private shopCommands: ShopCommand[] = []
   constructor(private parent: HTMLElement, private shop: ShopModel, private player: Player) {
-    this.events = new EventBus<ShopEvents>()
-
     this.shopCommands = [
       new BuyCommand(this.shop),
       new BuyAllCommand(this.shop),
@@ -29,8 +17,8 @@ export class ShopController {
     ]
 
     this.getCommandsForItem = this.getCommandsForItem.bind(this)
-    this.view = new ShopView(this.parent, this.shop, this.events, this.getCommandsForItem)
-    this.events.subscribe('itemClicked', ({ itemId, command, quantity }) => {
+    this.view = new ShopView(this.parent, this.shop, this.getCommandsForItem)
+    this.view.on('itemClicked', ({ itemId, command, quantity }) => {
       command.execute({ itemId, player: this.player, quantity })
     })
 

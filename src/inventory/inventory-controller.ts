@@ -1,6 +1,5 @@
 import { Command } from '../command'
 import { COINS_ITEM_ID, formatNumber, getItemById } from '../database/items'
-import { EventBus } from '../events'
 import { LootTable } from '../loot-table'
 import { Player } from '../player'
 import { ShopController } from '../shop/shop-controller'
@@ -157,28 +156,20 @@ const inventoryItemCommands = new Map<string, InventoryCommand[]>([
   ['birdNest', [new LootBirdNestCommand()]],
 ])
 
-export type InventoryEvents = {
-  itemClicked: { itemId: string; quantity?: number; command: InventoryCommand }
-}
-
 export class InventoryController {
   private view: InventoryView
-  private events: EventBus<InventoryEvents>
   constructor(private parent: HTMLElement, private player: Player, private uiManager: UIManager) {
-    this.events = new EventBus()
     this.getCommandsForItem = this.getCommandsForItem.bind(this)
-    this.view = new InventoryView(
-      this.parent,
-      this.events,
-      this.player.getInventory(),
-      this.getCommandsForItem
-    )
-    this.events.subscribe('itemClicked', ({ command, itemId, quantity }) => {
+
+    this.view = new InventoryView(this.parent, this.player.getInventory(), this.getCommandsForItem)
+
+    this.view.on('itemClicked', ({ command, itemId, quantity }) => {
       command.execute({ itemId, player: this.player, quantity })
     })
 
-    this.player.getInventory().on('inventoryChange', () => {
-      this.view.render(this.player.getInventory().getItems())
+    const inventory = this.player.getInventory()
+    inventory.on('inventoryChange', () => {
+      this.view.render(inventory.getItems())
     })
   }
 

@@ -1,26 +1,24 @@
-import { Bank, BankEvents } from './bank'
-import { EventBus } from './events'
+import { Bank } from './bank'
 import { GlobalTimer } from './global-timer'
 import { loadGame, saveGame } from './serializer'
-import { PlayerEvents, PlayerSkills, Skills } from './skills'
 import { Toaster } from './toaster'
-import { WoodcuttingActionUI } from './woodcutting/ui'
 import { getAssetForItem, items as itemsDb } from './database/items'
-import { skills as skillsDb } from './database/skills'
 import { Player } from './player'
 import { debounce } from './utilities'
-import { trees } from './database/trees'
-import { Equipment } from './equipment'
 import { TabViewUI } from './ui/tab-view-ui'
-import { ShopEvents, ShopModel } from './shop/shop-model'
+import { ShopModel } from './shop/shop-model'
 import { InventoryController } from './inventory/inventory-controller'
-import { InventoryEvents, InventoryModel } from './inventory/inventory-model'
+import { InventoryModel } from './inventory/inventory-model'
 import { UIManager } from './ui-manager'
 import { ShopManager } from './shop-manager'
 import { shops as shopsDB } from './database/shops'
 import { ItemQuantity } from './item-store'
-import { BankUI } from './bank-ui'
-import { EquipmentUI } from './ui/equipment-ui'
+// import { BankUI } from './bank-ui'
+import { SkillsModel } from './skills/skills-model'
+import { SkillsController } from './skills/skills-cotroller'
+import { WoodcuttingController } from './woodcutting/woodcutting-controller'
+import { EquipmentModel } from './equipment/equipment-model'
+import { EquipmentController } from './equipment/equipment-controller'
 
 export class Game {
   private player: Player
@@ -28,10 +26,6 @@ export class Game {
   private shops: ShopModel[] = []
   constructor() {
     const root = document.querySelector('#app')! as HTMLElement
-
-    const playerEvents = new EventBus<PlayerEvents>()
-    const bankEvents = new EventBus<BankEvents>()
-    const inventoryEvents = new EventBus<InventoryEvents>()
 
     const toaster = Toaster.getInstance()
 
@@ -43,13 +37,13 @@ export class Game {
       shops: loadedShops,
     } = loadGame()
 
-    const playerSkills = new PlayerSkills(loadedSkills, playerEvents)
-    const bank = new Bank(loadedBank, bankEvents)
-    const playerEquipment = new Equipment(loadedEquipment)
-    const inventory = new InventoryModel(loadedInventory, inventoryEvents)
-    this.player = new Player(playerSkills, playerEquipment, bank, inventory)
+    const skillsModel = new SkillsModel(loadedSkills)
+    const bank = new Bank(loadedBank)
+    const equipment = new EquipmentModel(loadedEquipment)
+    const inventory = new InventoryModel(loadedInventory)
+    this.player = new Player(skillsModel, equipment, bank, inventory)
 
-    inventoryEvents.subscribe('insertedItem', ({ itemId, amount }) => {
+    inventory.on('insertedItem', ({ itemId, amount }) => {
       const dbItem = itemsDb.get(itemId)!
       const html = `
         <div style="display:flex;align-items:center;gap:1rem;">
@@ -63,7 +57,7 @@ export class Game {
       toaster.toast(`${html}`)
     })
 
-    playerEvents.subscribe('levelUp', (skill) => {
+    skillsModel.on('levelUp', (skill) => {
       toaster.toast(`You leveled up ${skill.skill}, you are now level ${skill.level}!`)
       toaster.levelUpToast(skill.skill, skill.level)
     })
@@ -81,64 +75,28 @@ export class Game {
 
         return inventoryContainer
       },
-      Bank: () => {
-        const bankContainer = document.createElement('div')
-        bankContainer.classList.add('bank-grid')
+      // Bank: () => {
+      //   const bankContainer = document.createElement('div')
+      //   bankContainer.classList.add('bank-grid')
 
-        new BankUI(bankContainer, this.player)
-        return bankContainer
-      },
+      //   new BankUI(bankContainer, this.player)
+      //   return bankContainer
+      // },
       Equipment: () => {
         const equipmentContainer = document.createElement('div')
         equipmentContainer.classList.add('bank-grid')
         equipmentContainer.id = 'equipment'
-        new EquipmentUI(equipmentContainer, this.player)
+        new EquipmentController(equipmentContainer, equipment, this.player)
         return equipmentContainer
       },
       Skills: () => {
         const skillsContainer = document.createElement('div')
         skillsContainer.classList.add('bank-grid')
         skillsContainer.id = 'playerSkills'
+        new SkillsController(skillsContainer, skillsModel)
         return skillsContainer
       },
     })
-
-    const renderPlayerSkills = (playerSkills: PlayerSkills) => {
-      const playerSkillsRoot = document.querySelector<HTMLDivElement>('#Skills')
-      if (playerSkillsRoot) {
-        const skills = Object.keys(playerSkills.getSkills())
-
-        const itemsHtml = skills
-          .map((key) => {
-            const dbSkill = skillsDb.get(key)!
-            const level = playerSkills.getLevel(key as keyof Skills)
-            const experience = playerSkills.getXp(key as keyof Skills)
-            const nextLevelExperienceBreakpoint = playerSkills.getNextLevelXp(key as keyof Skills)
-            return `
-              <div style="border: 1px solid black; display:inline-flex;align-items:center;padding:.25rem;gap:0.5rem;">
-                <img style="width:25px;height:25px;object-fit:contain;" src="${dbSkill.asset}">
-                <div style="display:flex;gap:0.25rem;flex-direction:column;">
-                  <div style="font-weight:bold;">${dbSkill.name}</div>
-                  <div style="display:flex;flex-direction:column;gap:0.1rem;font-size:0.8rem;">
-                    <div>Level: ${level}</div>
-                    <div>xp: ${experience} / ${nextLevelExperienceBreakpoint}</div>
-                  </div>
-                </div>
-              </div>
-            `
-          })
-          .join('')
-        playerSkillsRoot.innerHTML = `
-          <h1>Skills</h1>
-          <div style="display:grid;gap:1rem;justify-content:start;">${itemsHtml}</div>
-        `
-      }
-    }
-
-    playerEvents.subscribe('xpGain', () => {
-      renderPlayerSkills(playerSkills)
-    })
-    renderPlayerSkills(playerSkills)
 
     const save = () => {
       saveGame(
@@ -155,48 +113,28 @@ export class Game {
     this.shops = shopsDB.map((shop) => {
       let initialItems = shop.items
       let loadedShopItems: ItemQuantity[] = loadedShops[shop.id] ?? initialItems
-      const events = new EventBus<ShopEvents>()
-      events.subscribe('shopChange', () => {
+      const shopModel = new ShopModel(shop.id, shop.name, loadedShopItems)
+      shopModel.on('shopChange', () => {
         debouncedSaveGame()
       })
-      return new ShopModel(shop.id, shop.name, loadedShopItems, events)
+      return shopModel
     })
     new ShopManager(root, uiManager, this.shops, this.player)
 
-    const wcRoot = document.createElement('div')
-    if (wcRoot) {
-      wcRoot.style.display = 'grid'
-      wcRoot.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))'
-
-      wcRoot.style.justifyContent = 'start'
-      wcRoot.style.gap = '1rem'
-      trees.forEach((tree) => {
-        const root = document.createElement('div')
-        wcRoot.appendChild(root)
-        new WoodcuttingActionUI(root, tree, this.player)
-      })
-    }
-    root.appendChild(wcRoot)
-
     this.timer = new GlobalTimer(600)
 
-    playerEvents.subscribe('xpGain', () => {
-      debouncedSaveGame()
-    })
-
-    bankEvents.subscribe('bankChange', () => {
-      debouncedSaveGame()
-    })
-
-    inventoryEvents.subscribe('inventoryChange', () => {
-      debouncedSaveGame()
-    })
-
-    playerEquipment.on('change', () => debouncedSaveGame())
+    skillsModel.on('xpGain', () => debouncedSaveGame())
+    bank.on('bankChange', () => debouncedSaveGame())
+    inventory.on('inventoryChange', () => debouncedSaveGame())
+    equipment.on('change', () => debouncedSaveGame())
 
     window.addEventListener('beforeunload', () => {
       save()
     })
+
+    const wc = document.createElement('div')
+    root.appendChild(wc)
+    new WoodcuttingController(wc, this.player)
   }
 
   start() {

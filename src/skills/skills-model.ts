@@ -1,5 +1,5 @@
-import { levelBreakpoints } from './database/skills'
-import { EventBus } from './events'
+import { getSkillById, levelBreakpoints } from '../database/skills'
+import { Evented } from '../events'
 
 export type Skill = {
   level: number
@@ -10,7 +10,7 @@ export type Skills = {
   woodcutting: Skill
 }
 
-export type PlayerEvents = {
+export type SkillEvents = {
   levelUp: {
     skill: keyof Skills
     level: number
@@ -22,6 +22,15 @@ export type PlayerEvents = {
   }
 }
 
+export interface SkillData {
+  id: keyof Skills
+  name: string
+  asset: string
+  level: number
+  xp: number
+  nextLevelXp: number
+}
+
 export const MAX_LEVEL = 99
 export const MAX_XP = 200_000_000
 
@@ -31,18 +40,31 @@ export const beginnerSkills: Skills = {
     xp: 0,
   },
 }
-export class PlayerSkills {
+
+export class SkillsModel extends Evented<SkillEvents> {
   private skills: Skills
 
-  private events: EventBus<PlayerEvents>
-
-  constructor(initialState: Skills, events: EventBus<PlayerEvents>) {
+  constructor(initialState: Skills) {
+    super()
     this.skills = initialState
-    this.events = events
   }
 
-  getSkills() {
+  getSkillSet() {
     return this.skills
+  }
+
+  getSkillData(): SkillData[] {
+    return Object.keys(this.skills).map((key) => {
+      const skill = getSkillById(key)
+      return {
+        id: key as keyof Skills,
+        name: skill.name,
+        asset: skill.asset,
+        level: this.getLevel(key as keyof Skills),
+        xp: this.getXp(key as keyof Skills),
+        nextLevelXp: this.getNextLevelXp(key as keyof Skills),
+      }
+    })
   }
 
   addXp(skill: keyof Skills, xp: number) {
@@ -67,18 +89,10 @@ export class PlayerSkills {
     }
 
     if (shouldLevelUp) {
-      this.events.notify('levelUp', { skill, level: newLevel })
+      this.notify('levelUp', { skill, level: newLevel })
     }
 
-    this.events.notify('xpGain', { skill, xp })
-  }
-
-  on<T extends keyof PlayerEvents>(event: T, callback: (data: PlayerEvents[T]) => void) {
-    this.events.subscribe(event, callback)
-  }
-
-  off<T extends keyof PlayerEvents>(event: T, callback: (data: PlayerEvents[T]) => void) {
-    this.events.unsubscribe(event, callback)
+    this.notify('xpGain', { skill, xp })
   }
 
   getLevel(skill: keyof Skills) {

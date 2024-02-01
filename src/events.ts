@@ -33,3 +33,19 @@ export class EventBus<TEvents> implements Observable<TEvents> {
     }
   }
 }
+
+export class Evented<T> {
+  private events = new EventBus<T>()
+
+  on<K extends keyof T>(event: K, callback: Listener<T[K]>) {
+    this.events.subscribe(event, callback)
+  }
+
+  off<K extends keyof T>(event: K, callback: Listener<T[K]>) {
+    this.events.unsubscribe(event, callback)
+  }
+
+  protected notify(event: keyof T, data: T[keyof T]) {
+    this.events.notify(event, data)
+  }
+}

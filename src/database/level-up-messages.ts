@@ -1,4 +1,4 @@
-import { Skills } from '../skills'
+import { Skills } from '../skills/player-skills'
 
 export const levelUpMessages = new Map<keyof Skills, Map<number, string>>([
   [

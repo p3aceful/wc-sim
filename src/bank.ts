@@ -1,4 +1,4 @@
-import { EventBus, Listener } from './events'
+import { Evented } from './events'
 import { COINS_ITEM_ID, items } from './database/items'
 import { Player } from './player'
 import { ItemStore } from './item-store'
@@ -20,12 +20,11 @@ export const initialBankItems: ItemQuantity[] = [
   },
 ]
 
-export class Bank {
+export class Bank extends Evented<BankEvents> {
   private items: ItemStore
-  private events: EventBus<BankEvents>
 
-  constructor(initialState: ItemQuantity[], events: EventBus<BankEvents>) {
-    this.events = events
+  constructor(initialState: ItemQuantity[]) {
+    super()
     this.items = new ItemStore(initialState)
   }
 
@@ -46,8 +45,8 @@ export class Bank {
     inventory.remove(itemId, amount)
     this.items.insert(itemId, amount)
 
-    this.events.notify('bankChange', null)
-    this.events.notify('insertedItem', {
+    this.notify('bankChange', null)
+    this.notify('insertedItem', {
       itemId,
       amount,
     })
@@ -80,7 +79,7 @@ export class Bank {
     // Remove item(s) from bank
     this.items.remove(itemId, amount)
 
-    this.events.notify('bankChange', null)
+    this.notify('bankChange', null)
   }
 
   withdrawAll(itemId: string, player: Player) {
@@ -103,13 +102,5 @@ export class Bank {
 
   hasItem(itemId: string) {
     return this.items.hasItem(itemId)
-  }
-
-  on<K extends keyof BankEvents>(event: K, callback: Listener<BankEvents[K]>) {
-    this.events.subscribe(event, callback)
-  }
-
-  off<K extends keyof BankEvents>(event: K, callback: Listener<BankEvents[K]>) {
-    this.events.unsubscribe(event, callback)
   }
 }

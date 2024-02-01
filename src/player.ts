@@ -1,25 +1,26 @@
 import { Bank } from './bank'
-import { PlayerSkills } from './skills'
 import { items as itemsDB } from './database/items'
 import { Action } from './global-timer'
-import { EventBus } from './events'
-import { Equipment, EquipmentSlot } from './equipment'
 import { InventoryModel } from './inventory/inventory-model'
+import { Evented } from './events'
+import { SkillsModel } from './skills/skills-model'
+import { EquipmentModel, EquipmentSlot } from './equipment/equipment-model'
 
 export interface PlayerEvents {
   actionStart: Action
   actionStop: Action
 }
 
-export class Player {
+export class Player extends Evented<PlayerEvents> {
   actionQueue: Action[] = []
-  events = new EventBus<PlayerEvents>()
   constructor(
-    private skills: PlayerSkills,
-    private equipment: Equipment,
+    private skills: SkillsModel,
+    private equipment: EquipmentModel,
     private bank: Bank,
     private inventory: InventoryModel
-  ) {}
+  ) {
+    super()
+  }
 
   equip(itemId: string) {
     const item = itemsDB.get(itemId)!
@@ -56,7 +57,7 @@ export class Player {
 
   startAction(action: Action) {
     this.actionQueue = [action]
-    this.events.notify('actionStart', action)
+    this.notify('actionStart', action)
   }
 
   update(deltaTime: number) {
@@ -68,7 +69,7 @@ export class Player {
       if (currentAction.isComplete()) {
         const completedAction = this.actionQueue.shift()
         if (completedAction) {
-          this.events.notify('actionStop', completedAction)
+          this.notify('actionStop', completedAction)
         }
       }
     }
@@ -92,10 +93,6 @@ export class Player {
 
   stopAction() {
     this.actionQueue = []
-  }
-
-  getEvents() {
-    return this.events
   }
 
   getInventory() {

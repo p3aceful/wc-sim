@@ -25,3 +25,35 @@ export class SpriteAnimation {
     ctx.drawImage(this.image, frameX, 0, this.frameWidth, this.frameHeight, x, y, width, height)
   }
 }
+
+export class Animation {
+  private spriteAnimation: SpriteAnimation
+  private animationIntervalId: number | null = null
+  private root: HTMLElement
+  private canvasContext: CanvasRenderingContext2D
+  constructor(root: HTMLElement, spriteAnimation: SpriteAnimation) {
+    this.root = root
+    this.spriteAnimation = spriteAnimation
+    const canvas = document.createElement('canvas')
+    canvas.width = 50
+    canvas.height = 50
+    canvas.style.position = 'absolute'
+    canvas.style.bottom = '0'
+    canvas.style.left = '100%'
+    this.root.appendChild(canvas)
+    this.canvasContext = canvas.getContext('2d')!
+  }
+
+  start(): number {
+    this.animationIntervalId = setInterval(() => {
+      this.spriteAnimation.update(600 / 4)
+      this.spriteAnimation.render(this.canvasContext, 0, 0, 50, 50)
+    }, 600 / 4)
+
+    return this.animationIntervalId
+  }
+
+  stop() {
+    clearInterval(this.animationIntervalId!)
+  }
+}

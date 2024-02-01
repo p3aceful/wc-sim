@@ -1,4 +1,4 @@
-import { EquipmentSlot } from '../equipment'
+import { EquipmentSlot } from '../equipment/equipment-model'
 
 export type Item = {
   id: string

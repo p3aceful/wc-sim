@@ -1,5 +1,5 @@
 import { COINS_ITEM_ID, getItemById } from '../database/items'
-import { EventBus } from '../events'
+import { Evented } from '../events'
 import { ItemQuantity, ItemStore } from '../item-store'
 import { Player } from '../player'
 import { Toaster } from '../toaster'
@@ -8,15 +8,11 @@ export interface ShopEvents {
   shopChange: null
 }
 
-export class ShopModel {
+export class ShopModel extends Evented<ShopEvents> {
   private store: ItemStore
 
-  constructor(
-    private id: string,
-    private name: string,
-    initialItems: ItemQuantity[],
-    private events: EventBus<ShopEvents>
-  ) {
+  constructor(private id: string, private name: string, initialItems: ItemQuantity[]) {
+    super()
     this.store = new ItemStore(initialItems)
   }
 
@@ -34,12 +30,12 @@ export class ShopModel {
 
   insertItem(itemId: string, quantity: number) {
     this.store.insert(itemId, quantity)
-    this.events.notify('shopChange', null)
+    this.notify('shopChange', null)
   }
 
   removeItem(itemId: string, quantity: number) {
     this.store.remove(itemId, quantity)
-    this.events.notify('shopChange', null)
+    this.notify('shopChange', null)
   }
 
   hasItem(itemId: string) {
@@ -52,14 +48,6 @@ export class ShopModel {
 
   getQuantity(itemId: string) {
     return this.store.getQuantity(itemId)
-  }
-
-  on<T extends keyof ShopEvents>(event: T, handler: (data: ShopEvents[T]) => void) {
-    this.events.subscribe(event, handler)
-  }
-
-  off<T extends keyof ShopEvents>(event: T, handler: (data: ShopEvents[T]) => void) {
-    this.events.unsubscribe(event, handler)
   }
 
   sellItem(itemId: string, quantity: number, player: Player): void {

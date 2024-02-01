@@ -3,10 +3,17 @@ import { ContextMenu } from '../ui/context-menu'
 import { ItemQuantity } from '../item-store'
 import { ShopCommand } from './shop-command'
 import { ShopModel } from './shop-model'
-import { ShopEvents } from './shop-controller'
-import { EventBus } from '../events'
+import { Evented } from '../events'
 
-export class ShopView {
+export type ShopViewEvents = {
+  itemClicked: {
+    itemId: string
+    command: ShopCommand
+    quantity?: number
+  }
+}
+
+export class ShopView extends Evented<ShopViewEvents> {
   private root: HTMLElement
   private staticContent: HTMLElement
   private dynamicContent: HTMLElement
@@ -14,9 +21,9 @@ export class ShopView {
   constructor(
     private parent: HTMLElement,
     private shop: ShopModel,
-    private events: EventBus<ShopEvents>,
     private getCommandsForItem: (itemId: string) => ShopCommand[]
   ) {
+    super()
     this.root = document.createElement('div')
     this.root.classList.add('shop-view')
     this.staticContent = document.createElement('div')
@@ -46,7 +53,7 @@ export class ShopView {
             const command = commands.find((command) => command.id === optionId)
 
             if (command) {
-              this.events.notify('itemClicked', { itemId, quantity, command })
+              this.notify('itemClicked', { itemId, quantity, command })
             }
           }
 

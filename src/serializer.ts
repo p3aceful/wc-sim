@@ -1,10 +1,11 @@
 import { z } from 'zod'
-import { PlayerSkills, Skills, beginnerSkills } from './skills'
+import { Skills, beginnerSkills } from './skills/player-skills'
 import { Bank, ItemQuantity, initialBankItems } from './bank'
-import { Equipment, emptyEquipment, EquippedItems } from './equipment'
 import { levelBreakpoints } from './database/skills'
 import { ShopModel } from './shop/shop-model'
 import { InventoryModel } from './inventory/inventory-model'
+import { SkillsModel } from './skills/skills-model'
+import { EquipmentModel, EquippedItems, emptyEquipment } from './equipment/equipment-model'
 
 const skillsSchema = z.object({
   woodcutting: z.number(),
@@ -102,8 +103,8 @@ const serializeInventory = (inventory: InventoryModel): z.infer<typeof inventory
   return inventoryResult.data
 }
 
-const serializeEquipment = (equipment: Equipment): z.infer<typeof equipmentSchema> => {
-  const equipmentData = equipment.getEquipment()
+const serializeEquipment = (equipment: EquipmentModel): z.infer<typeof equipmentSchema> => {
+  const equipmentData = equipment.getEquippedItems()
 
   const equipmentResult = equipmentSchema.safeParse(equipmentData)
   if (!equipmentResult.success) {
@@ -119,13 +120,13 @@ export function saveToLocalStorage(key: string, data: unknown) {
 }
 
 export function saveGame(
-  skills: PlayerSkills,
+  skills: SkillsModel,
   bank: Bank,
   inventory: InventoryModel,
-  equipment: Equipment,
+  equipment: EquipmentModel,
   shops: ShopModel[]
 ) {
-  const serialiedSkills = serializeSkills(skills.getSkills())
+  const serialiedSkills = serializeSkills(skills.getSkillSet())
   const serializedBank = serializeBank(bank)
   const serializedInventory = serializeInventory(inventory)
   const serializedShops = serializeShops(shops)

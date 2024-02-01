@@ -1,6 +1,6 @@
 import { levelUpMessages } from './database/level-up-messages'
 import { skills } from './database/skills'
-import { Skills } from './skills'
+import { Skills } from './skills/player-skills'
 
 export class Toaster {
   private static instance: Toaster
