@@ -20,6 +20,8 @@ import { WoodcuttingController } from './woodcutting/woodcutting-controller'
 import { EquipmentModel } from './equipment/equipment-model'
 import { EquipmentController } from './equipment/equipment-controller'
 import { FiremakingController } from './firemaking/firemaking-controller'
+import { FloatingTextManager } from './floating-text'
+import { getSkillById } from './database/skills'
 
 export class Game {
   private player: Player
@@ -138,6 +140,15 @@ export class Game {
     new WoodcuttingController(wc, this.player)
 
     new FiremakingController(root, this.player)
+
+    const floatingTextManager = new FloatingTextManager(document.body)
+    // this.timer.registerCallback(floatingTextManager.update.bind(floatingTextManager))
+    floatingTextManager.update.bind(floatingTextManager)
+    setInterval(() => floatingTextManager.update(1000 / 30), 1000 / 30)
+    skillsModel.on('xpGain', ({ skill, xp }) => {
+      const data = getSkillById(skill)
+      floatingTextManager.createText(`+${xp}xp`, data.asset)
+    })
   }
 
   start() {

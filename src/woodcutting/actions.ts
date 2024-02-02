@@ -79,7 +79,6 @@ export class ChopTreeAction implements IChopTreeAction {
   }
 
   update(_deltaTime: number) {
-    console.log('woodcutting action')
     const equipment = this.player.getEquipment()
     const skills = this.player.getSkills().getSkillSet()
     const equippedItem = equipment.getEquippedItem('weapon')

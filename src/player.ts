@@ -56,6 +56,9 @@ export class Player extends Evented<PlayerEvents> {
   }
 
   startAction(action: Action) {
+    if (this.actionQueue.length > 0) {
+      this.stopAction()
+    }
     this.actionQueue = [action]
     this.notify('actionStart', action)
   }
