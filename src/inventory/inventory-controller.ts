@@ -73,7 +73,7 @@ class LootBirdNestCommand implements InventoryCommand {
       {
         itemId: COINS_ITEM_ID,
         amount: 1000,
-        weight: 100,
+        weight: 200,
       },
       {
         itemId: 'blueWizardHat',
@@ -83,7 +83,12 @@ class LootBirdNestCommand implements InventoryCommand {
       {
         itemId: 'tinderbox',
         amount: 1,
-        weight: 80,
+        weight: 100,
+      },
+      {
+        itemId: 'leatherBoots',
+        amount: 1,
+        weight: 20,
       },
     ])
     const item = table.pickItem()
