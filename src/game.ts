@@ -130,7 +130,7 @@ export class Game {
     equipment.on('change', () => debouncedSaveGame())
 
     window.addEventListener('beforeunload', () => {
-      // save()
+      save()
     })
 
     const wc = document.createElement('div')
