@@ -11,13 +11,16 @@ export class WoodcuttingController {
     this.model = new WoodcuttingModel(trees)
     this.view = new WoodcuttingView(parent)
     this.view.on('chopTreeButtonClick', ({ treeId }) => {
-      const tree = this.model.getTreeById(treeId)
+      const playerLevel = player.getSkills().getLevel('woodcutting')
 
-      const canCut = tree.requiredLevel <= player.getSkills().getLevel('woodcutting')
       const currentActionId = player.getCurrentActionId()
       if (currentActionId === treeId) {
         player.stopAction()
-        this.view.render(this.model.getTrees().map((tree) => ({ tree, isBeingCut: false, canCut })))
+        this.view.render(
+          this.model
+            .getTrees()
+            .map((tree) => ({ tree, isBeingCut: false, canCut: tree.requiredLevel <= playerLevel }))
+        )
         this.view.stopChoppingAnimation()
       } else {
         const tree = this.model.getTreeById(treeId)
@@ -26,7 +29,7 @@ export class WoodcuttingController {
           this.model.getTrees().map((tree) => ({
             tree,
             isBeingCut: tree.id === treeId,
-            canCut,
+            canCut: tree.requiredLevel <= playerLevel,
           }))
         )
         this.view.startChoppingAnimation(treeId)
