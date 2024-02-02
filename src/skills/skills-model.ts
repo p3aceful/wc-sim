@@ -8,6 +8,7 @@ export type Skill = {
 
 export type Skills = {
   woodcutting: Skill
+  firemaking: Skill
 }
 
 export type SkillEvents = {
@@ -36,6 +37,10 @@ export const MAX_XP = 200_000_000
 
 export const beginnerSkills: Skills = {
   woodcutting: {
+    level: 1,
+    xp: 0,
+  },
+  firemaking: {
     level: 1,
     xp: 0,
   },

@@ -13,12 +13,13 @@ import { UIManager } from './ui-manager'
 import { ShopManager } from './shop-manager'
 import { shops as shopsDB } from './database/shops'
 import { ItemQuantity } from './item-store'
-// import { BankUI } from './bank-ui'
+import { BankUI } from './bank-ui'
 import { SkillsModel } from './skills/skills-model'
 import { SkillsController } from './skills/skills-cotroller'
 import { WoodcuttingController } from './woodcutting/woodcutting-controller'
 import { EquipmentModel } from './equipment/equipment-model'
 import { EquipmentController } from './equipment/equipment-controller'
+import { FiremakingController } from './firemaking/firemaking-controller'
 
 export class Game {
   private player: Player
@@ -75,13 +76,13 @@ export class Game {
 
         return inventoryContainer
       },
-      // Bank: () => {
-      //   const bankContainer = document.createElement('div')
-      //   bankContainer.classList.add('bank-grid')
+      Bank: () => {
+        const bankContainer = document.createElement('div')
+        bankContainer.classList.add('bank-grid')
 
-      //   new BankUI(bankContainer, this.player)
-      //   return bankContainer
-      // },
+        new BankUI(bankContainer, this.player)
+        return bankContainer
+      },
       Equipment: () => {
         const equipmentContainer = document.createElement('div')
         equipmentContainer.classList.add('bank-grid')
@@ -129,12 +130,14 @@ export class Game {
     equipment.on('change', () => debouncedSaveGame())
 
     window.addEventListener('beforeunload', () => {
-      save()
+      // save()
     })
 
     const wc = document.createElement('div')
     root.appendChild(wc)
     new WoodcuttingController(wc, this.player)
+
+    new FiremakingController(root, this.player)
   }
 
   start() {

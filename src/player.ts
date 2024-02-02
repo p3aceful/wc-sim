@@ -92,6 +92,14 @@ export class Player extends Evented<PlayerEvents> {
   }
 
   stopAction() {
+    if (this.actionQueue.length === 0) {
+      return
+    }
+
+    this.actionQueue.forEach((action) => {
+      this.notify('actionStop', action)
+    })
+
     this.actionQueue = []
   }
 

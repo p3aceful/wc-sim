@@ -1,4 +1,4 @@
-import { WoodcuttingTree } from '../database/trees'
+import { WoodcuttingTree } from '../database/woodcutting'
 import { Action } from '../global-timer'
 import { Player } from '../player'
 import { Toaster } from '../toaster'
@@ -79,6 +79,7 @@ export class ChopTreeAction implements IChopTreeAction {
   }
 
   update(_deltaTime: number) {
+    console.log('woodcutting action')
     const equipment = this.player.getEquipment()
     const skills = this.player.getSkills().getSkillSet()
     const equippedItem = equipment.getEquippedItem('weapon')
@@ -88,6 +89,7 @@ export class ChopTreeAction implements IChopTreeAction {
     if (!hasRequiredLevel) {
       this.completed = true
       toaster.toast(`You need level ${this.tree.requiredLevel} woodcutting to chop this tree`)
+      this.completed = true
       return
     }
 

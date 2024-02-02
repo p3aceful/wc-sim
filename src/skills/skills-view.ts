@@ -23,8 +23,7 @@ export class SkillsView {
       })
       .join('')
     this.parent.innerHTML = `
-        <h1>Skills</h1>
-        <div style="display:grid;gap:1rem;justify-content:start;">${itemsHtml}</div>
+        <div style="display:grid;auto-flow:column;gap:1rem;justify-content:start;">${itemsHtml}</div>
       `
   }
 }

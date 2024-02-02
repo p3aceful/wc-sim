@@ -1,4 +1,4 @@
-import { WoodcuttingTree } from '../database/trees'
+import { WoodcuttingTree } from '../database/woodcutting'
 
 export class WoodcuttingModel {
   constructor(private trees: WoodcuttingTree[]) {}

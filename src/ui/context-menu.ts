@@ -57,7 +57,6 @@ export class ContextMenu {
 
   private handleClickOutside(event: MouseEvent) {
     if (this.menuElement && !this.menuElement.contains(event.target as Node)) {
-      console.log('Hide')
       this.hide()
     } else {
       // console.log('Wont hide')

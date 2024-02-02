@@ -8,7 +8,8 @@ import { SkillsModel } from './skills/skills-model'
 import { EquipmentModel, EquippedItems, emptyEquipment } from './equipment/equipment-model'
 
 const skillsSchema = z.object({
-  woodcutting: z.number(),
+  woodcutting: z.number().optional(),
+  firemaking: z.number().optional(),
 })
 
 const bankSchema = z.array(

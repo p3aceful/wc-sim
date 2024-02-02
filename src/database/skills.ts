@@ -13,6 +13,14 @@ export const skills = new Map<string, Skill>([
       asset: 'https://oldschool.runescape.wiki/images/Woodcutting_icon_%28detail%29.png?a4903',
     },
   ],
+  [
+    'firemaking',
+    {
+      id: 'firemaking',
+      name: 'Firemaking',
+      asset: 'https://oldschool.runescape.wiki/images/Firemaking_icon_%28detail%29.png?a4903',
+    },
+  ],
 ])
 
 export const getSkillById = (id: string) => {

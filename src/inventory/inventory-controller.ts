@@ -83,7 +83,7 @@ class LootBirdNestCommand implements InventoryCommand {
       {
         itemId: 'tinderbox',
         amount: 1,
-        weight: 5,
+        weight: 80,
       },
     ])
     const item = table.pickItem()
