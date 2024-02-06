@@ -68,7 +68,7 @@ export class BurnLogAction extends Evented<BurnLogActionEvents> implements IBurn
 
     const probability = this.calculateBurnChance(skills.getLevel('firemaking'))
 
-    if (Math.random() > probability) {
+    if (Math.random() < probability) {
       inventory.remove(this.firemakingLog.itemId, 1)
       skills.addXp('firemaking', this.firemakingLog.xp)
       Toaster.getInstance().toast('You burn the log.')
